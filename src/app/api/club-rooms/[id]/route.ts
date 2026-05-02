@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/apiLogger';
 import { dbConnect } from '@/lib/db';
 import ClubRoom from '@/lib/models/ClubRoom';
+import { isSportType, normalizeMetricInput, type MetricInput } from '@/lib/clubRoomValidation';
+import { canManageClubRoom, getActorIdFromRequest } from '@/lib/clubRoomAuth';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,12 +12,7 @@ type UpdateClubRoomBody = {
   sportType?: string;
   ownerId?: string;
   managers?: string[];
-  positionMetrics?: Array<{
-    key: string;
-    label: string;
-    isActive?: boolean;
-    order?: number;
-  }>;
+  positionMetrics?: MetricInput[];
 };
 
 async function _GET(
@@ -47,23 +44,76 @@ async function _PATCH(
 ) {
   await dbConnect();
   const { id } = context.params;
+  const actorId = getActorIdFromRequest(request);
+  if (!actorId) {
+    return NextResponse.json(
+      { success: false, message: 'x-actor-id 헤더가 필요합니다.' },
+      { status: 401 }
+    );
+  }
+
+  const existing = await ClubRoom.findById(id);
+  if (!existing) {
+    return NextResponse.json(
+      { success: false, message: '클럽룸을 찾을 수 없습니다.' },
+      { status: 404 }
+    );
+  }
+  if (!canManageClubRoom(actorId, existing)) {
+    return NextResponse.json(
+      { success: false, message: '수정 권한이 없습니다.' },
+      { status: 403 }
+    );
+  }
+
   const body = (await request.json()) as UpdateClubRoomBody;
 
   const update: UpdateClubRoomBody = {};
   if (typeof body.name === 'string') {
-    update.name = body.name.trim();
+    const name = body.name.trim();
+    if (!name) {
+      return NextResponse.json(
+        { success: false, message: 'name은 비어 있을 수 없습니다.' },
+        { status: 400 }
+      );
+    }
+    update.name = name;
   }
   if (typeof body.sportType === 'string') {
-    update.sportType = body.sportType.trim();
+    const sportType = body.sportType.trim().toLowerCase();
+    if (!isSportType(sportType)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: `sportType은 ${['jokgu', 'soccer', 'baseball', 'etc'].join(', ')} 중 하나여야 합니다.`
+        },
+        { status: 400 }
+      );
+    }
+    update.sportType = sportType;
   }
   if (typeof body.ownerId === 'string') {
-    update.ownerId = body.ownerId.trim();
+    const ownerId = body.ownerId.trim();
+    if (!ownerId) {
+      return NextResponse.json(
+        { success: false, message: 'ownerId는 비어 있을 수 없습니다.' },
+        { status: 400 }
+      );
+    }
+    update.ownerId = ownerId;
   }
   if (Array.isArray(body.managers)) {
-    update.managers = body.managers;
+    update.managers = body.managers.map((manager) => manager.trim()).filter(Boolean);
   }
   if (Array.isArray(body.positionMetrics)) {
-    update.positionMetrics = body.positionMetrics;
+    const normalizedMetrics = normalizeMetricInput(body.positionMetrics);
+    if (!normalizedMetrics.ok) {
+      return NextResponse.json(
+        { success: false, message: normalizedMetrics.message },
+        { status: 400 }
+      );
+    }
+    update.positionMetrics = normalizedMetrics.data;
   }
 
   if (Object.keys(update).length === 0) {
@@ -94,11 +144,32 @@ async function _PATCH(
 export const PATCH = withApiLogging(_PATCH, '/api/club-rooms/[id]');
 
 async function _DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   context: { params: { id: string } }
 ) {
   await dbConnect();
   const { id } = context.params;
+  const actorId = getActorIdFromRequest(request);
+  if (!actorId) {
+    return NextResponse.json(
+      { success: false, message: 'x-actor-id 헤더가 필요합니다.' },
+      { status: 401 }
+    );
+  }
+
+  const existing = await ClubRoom.findById(id);
+  if (!existing) {
+    return NextResponse.json(
+      { success: false, message: '클럽룸을 찾을 수 없습니다.' },
+      { status: 404 }
+    );
+  }
+  if (!canManageClubRoom(actorId, existing)) {
+    return NextResponse.json(
+      { success: false, message: '삭제 권한이 없습니다.' },
+      { status: 403 }
+    );
+  }
 
   const deleted = await ClubRoom.findByIdAndDelete(id).lean();
   if (!deleted) {
