@@ -1,0 +1,45 @@
+name: Update MAP.md
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**/*.ts'
+      - 'src/**/*.tsx'
+      - 'src/**/*.js'
+      - 'src/**/*.jsx'
+
+jobs:
+  update-maps:
+    name: Update MAP files (optional)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Verify generator script
+        id: verify
+        run: |
+          if [ -f "scripts/generate-maps.js" ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Skip when script is missing
+        if: steps.verify.outputs.exists == 'false'
+        run: echo "scripts/generate-maps.js not found. Skipping."
+
+      - name: Run generator
+        if: steps.verify.outputs.exists == 'true'
+        run: node scripts/generate-maps.js
