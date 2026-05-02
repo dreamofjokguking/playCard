@@ -10,8 +10,11 @@
 | Health (DB) | `/api/health` | `health/route.ts` |
 | Health (Cloudinary) | `/api/health/cloudinary` | `health/cloudinary/route.ts` |
 | Auth Session | `/api/auth/session` | `auth/session/route.ts` (GET, POST, DELETE) |
+| Auth Me | `/api/auth/me` | `auth/me/route.ts` (GET) |
 | Club Rooms | `/api/club-rooms` | `club-rooms/route.ts` |
 | Club Room Detail | `/api/club-rooms/[id]` | `club-rooms/[id]/route.ts` (GET, PATCH, DELETE) |
+| Admin Matches | `/api/admin/matches` | `admin/matches/route.ts` (GET, POST) |
+| Admin Match Detail | `/api/admin/matches/[id]` | `admin/matches/[id]/route.ts` (PATCH) |
 
 ## 도메인별 MAP
 
