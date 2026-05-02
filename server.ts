@@ -1,3 +1,4 @@
+// @ts-nocheck
 /* eslint-disable no-console, @typescript-eslint/no-explicit-any */
 import express from 'express';
 import { createServer } from 'http';

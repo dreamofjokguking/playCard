@@ -11,6 +11,9 @@ export default function HomePage() {
     <main>
       <h1>PlayCard Bootstrap</h1>
       <p>기초 구동 체크용 최소 구축 상태입니다.</p>
+      <p>
+        테스트 페이지: <a href="/club-rooms">/club-rooms</a>
+      </p>
       <section className="card">
         <h2>현재 체크 포인트</h2>
         <ul className="check-list">

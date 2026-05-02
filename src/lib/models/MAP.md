@@ -13,6 +13,10 @@
 - `Evaluation.ts`
 - `BGMTrack.ts`
 
+## 현재 구현 모델
+
+- `ClubRoom.ts`
+
 ## 참고
 
 - 모델은 `mongoose.models.X || mongoose.model(...)` 패턴 사용

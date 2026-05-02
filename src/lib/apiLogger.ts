@@ -1,11 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-type Handler = (request: NextRequest) => Promise<NextResponse>;
+type Handler<TArgs extends unknown[] = []> = (
+  request: NextRequest,
+  ...args: TArgs
+) => Promise<NextResponse>;
 
-export function withApiLogging(handler: Handler, route: string) {
-  return async function wrapped(request: NextRequest): Promise<NextResponse> {
+export function withApiLogging<TArgs extends unknown[]>(
+  handler: Handler<TArgs>,
+  route: string
+) {
+  return async function wrapped(
+    request: NextRequest,
+    ...args: TArgs
+  ): Promise<NextResponse> {
     const startedAt = Date.now();
-    const response = await handler(request);
+    const response = await handler(request, ...args);
     const elapsed = Date.now() - startedAt;
     const enabled = process.env.API_LOGGING !== 'false';
 
