@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/apiLogger';
 import { dbConnect } from '@/lib/db';
 import ClubRoom from '@/lib/models/ClubRoom';
+import { isSportType, normalizeMetricInput, type MetricInput } from '@/lib/clubRoomValidation';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,12 +11,7 @@ type CreateClubRoomBody = {
   sportType?: string;
   ownerId?: string;
   managers?: string[];
-  positionMetrics?: Array<{
-    key: string;
-    label: string;
-    isActive?: boolean;
-    order?: number;
-  }>;
+  positionMetrics?: MetricInput[];
 };
 
 async function _GET(_request: NextRequest) {
@@ -34,19 +30,40 @@ async function _POST(request: NextRequest) {
   await dbConnect();
 
   const body = (await request.json()) as CreateClubRoomBody;
-  if (!body?.name || !body?.ownerId) {
+  const name = body?.name?.trim() || '';
+  const ownerId = body?.ownerId?.trim() || '';
+  const sportType = (body?.sportType?.trim() || 'etc').toLowerCase();
+  const managers = (body?.managers ?? []).map((manager) => manager.trim()).filter(Boolean);
+  const positionMetrics = body?.positionMetrics ?? [];
+
+  if (!name || !ownerId) {
     return NextResponse.json(
       { success: false, message: 'name과 ownerId는 필수입니다.' },
       { status: 400 }
     );
   }
 
+  if (!isSportType(sportType)) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: `sportType은 ${['jokgu', 'soccer', 'baseball', 'etc'].join(', ')} 중 하나여야 합니다.`
+      },
+      { status: 400 }
+    );
+  }
+
+  const normalizedMetrics = normalizeMetricInput(positionMetrics);
+  if (!normalizedMetrics.ok) {
+    return NextResponse.json({ success: false, message: normalizedMetrics.message }, { status: 400 });
+  }
+
   const created = await ClubRoom.create({
-    name: body.name.trim(),
-    sportType: body.sportType?.trim() || 'etc',
-    ownerId: body.ownerId.trim(),
-    managers: body.managers ?? [],
-    positionMetrics: body.positionMetrics ?? []
+    name,
+    sportType,
+    ownerId,
+    managers,
+    positionMetrics: normalizedMetrics.data
   });
 
   return NextResponse.json(
