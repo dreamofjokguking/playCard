@@ -1,0 +1,36 @@
+name: Auto Work Log
+
+on:
+  workflow_dispatch:
+
+jobs:
+  generate-worklog:
+    name: Generate work-log (optional)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Verify generator script
+        id: verify
+        run: |
+          if [ -f "scripts/generate-worklog.py" ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Skip when script is missing
+        if: steps.verify.outputs.exists == 'false'
+        run: echo "scripts/generate-worklog.py not found. Skipping."
+
+      - name: Run generator
+        if: steps.verify.outputs.exists == 'true'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python3 scripts/generate-worklog.py
