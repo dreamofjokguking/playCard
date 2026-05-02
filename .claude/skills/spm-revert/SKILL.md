@@ -1,7 +1,7 @@
 ---
 name: spm-revert
 description: >
-  Side Project Mate 작업 롤백 커맨드.
+  PlayCard 작업 롤백 커맨드.
   `/spm-revert` 호출 시 work-log 목록을 보여주고, 선택한 작업을 git revert합니다.
   충돌 발생 시 해당 work-log의 "건드리면 안 되는 부분" 정보를 활용해 안내합니다.
   롤백 완료 후 gh pr create로 PR을 자동 생성합니다.

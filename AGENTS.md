@@ -1,4 +1,4 @@
-# AGENTS.md — Side Project Mate (OpenAI Codex용)
+# AGENTS.md — PlayCard (OpenAI Codex용)
 
 ## 인코딩 안전 규칙 (필수)
 

@@ -1,7 +1,7 @@
 ---
 name: spm-done
 description: >
-  Side Project Mate 작업 종료 커맨드.
+  PlayCard 작업 종료 커맨드.
   `/spm-done` 호출 시 최종 테스트 검증 후 work-log를 생성하고,
   관련 문서를 자동 갱신하며 .workzones.yml 구역을 해제합니다.
   sideProjectMate 프로젝트에서 작업 완료 시 항상 이 커맨드로 종료하세요.

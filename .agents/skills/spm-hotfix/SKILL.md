@@ -1,7 +1,7 @@
 ---
 name: spm-hotfix
 description: >
-  Side Project Mate 긴급수정 커맨드.
+  PlayCard 긴급수정 커맨드.
   `/spm-hotfix [SPM-번호] [오류 설명]` 형태로 호출하면 main 브랜치에서 즉시 수정 후
   브랜치 → 수정 → 테스트 → PR → 머지까지 전자동으로 수행합니다.
   운영 크리티컬 오류가 발생하여 즉시 배포가 필요한 경우에만 사용하세요.

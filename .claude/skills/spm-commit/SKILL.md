@@ -1,10 +1,10 @@
 ---
 name: spm-commit
 description: >
-  Side Project Mate 중간 커밋 커맨드.
+  playCard 중간 커밋 커맨드.
   `/spm-commit` 호출 시 변경 내용을 분석하고, 테스트를 검증한 뒤,
   AI가 커밋 메시지 초안을 작성하여 확인 후 commit + push합니다.
-  sideProjectMate 프로젝트에서 작업 중 커밋할 때 사용하세요.
+  playCard 프로젝트에서 작업 중 커밋할 때 사용하세요.
 ---
 
 # spm-commit — 중간 커밋 커맨드

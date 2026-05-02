@@ -1,8 +1,16 @@
-# 족구 동호회 통합 운영 플랫폼 — Claude Code 개발 지시서
+# 스포츠 동호회 통합 운영 플랫폼 — Claude Code 개발 지시서
 
 ## 프로젝트 개요
 
-족구 동호회의 경기 기록 관리, 동료 평가, 순위/통계, 자동 팀 구성을 지원하는 **모바일 메인 + 웹(데스크톱) 호환 반응형 플랫폼**을 개발한다.
+족구/야구/축구 등 다양한 스포츠 동호회에서 공통으로 사용할 수 있는 경기 기록 관리, 동료 평가, 순위/통계, 자동 팀 구성을 지원하는 **모바일 메인 + 웹(데스크톱) 호환 반응형 플랫폼**을 개발한다.
+
+- 프로젝트명: **PlayCard**
+
+### 확장 방향 (멀티 스포츠)
+
+- 플랫폼은 특정 종목(족구) 전용이 아니라 **클럽룸 단위 멀티 스포츠**를 기본 전제로 설계한다.
+- 사용자는 클럽룸을 생성/관리할 수 있으며, 각 클럽룸은 종목/운영 규칙을 독립적으로 가진다.
+- 기존의 공격/수비/토스/서브 4개 고정 포지션 대신, **클럽룸 관리자가 평가 항목(포지션/지표)을 추가/삭제**할 수 있어야 한다.
 
 ### 반응형 전략 (Mobile-Main, Web-Compatible)
 
@@ -31,10 +39,15 @@
 - **차트**: Recharts (방사형 차트, 꺾은선 그래프)
 - **기타**: YouTube Data API v3, Howler.js (BGM)
 
+### 디자인 참조 원칙 (필수)
+
+- UI/UX 구현, 컴포넌트 스타일링, 색상/타이포 적용 시 **반드시 `docs/design` 폴더를 우선 참조**한다.
+- 신규 화면/컴포넌트 추가 시에도 기존 `docs/design`의 토큰/패턴/시안과 일관성을 유지한다.
+
 ### 디렉토리 구조 (초기)
 
 ```
-jokgu-app/
+playCard/
 ├── src/
 │   ├── app/                    # Next.js App Router
 │   │   ├── layout.tsx          # 전역 레이아웃 (BGM 플레이어 포함)
@@ -48,6 +61,7 @@ jokgu-app/
 │   │   └── api/                # API Route Handlers
 │   │       ├── auth/
 │   │       ├── users/
+│   │       ├── club-rooms/
 │   │       ├── matches/
 │   │       ├── evaluations/
 │   │       ├── rankings/
@@ -92,9 +106,10 @@ jokgu-app/
 // User
 {
   _id: ObjectId,
+  clubRoomId: ObjectId,               // 소속 클럽룸
   kakaoId: string,                    // 카카오 고유 ID
-  realName: string,                   // 실명 (카카오에서 수집)
-  displayName: string,                // 표시명 (동명이인 구분자 포함, 예: "홍길동(A)")
+  nickname: string,                   // 닉네임 (최초 로그인 후 사용자 설정)
+  displayName: string,                // 표시명 (닉네임 기반, 동명이인 구분자 포함 가능)
   role: "admin" | "member" | "pending", // pending = 가입 승인 대기
   status: "active" | "inactive",
   profileImage?: string,
@@ -109,9 +124,27 @@ jokgu-app/
   updatedAt: Date
 }
 
+// ClubRoom (클럽룸)
+{
+  _id: ObjectId,
+  name: string,                       // 예: 수요 야간 풋살, 토요 족구
+  sportType: "jokgu" | "soccer" | "baseball" | "etc",
+  ownerId: ObjectId,                  // 방 생성자(관리자)
+  managers: [ObjectId],               // 추가 관리자
+  positionMetrics: [{                 // 클럽룸별 동적 평가 항목
+    key: string,                      // 예: attack, defense, pass
+    label: string,                    // 예: 공격, 수비, 패스
+    isActive: boolean,
+    order: number
+  }],
+  createdAt: Date,
+  updatedAt: Date
+}
+
 // Match (경기)
 {
   _id: ObjectId,
+  clubRoomId: ObjectId,               // 경기 소속 클럽룸
   date: Date,
   time: string,                       // "19:00"
   venue?: string,                     // 경기장
@@ -126,12 +159,13 @@ jokgu-app/
   results?: {                         // 평가 종료 후 최종 집계
     playerStats: [{
       userId: ObjectId,
-      attack: { avg: number, count: number },
-      defense: { avg: number, count: number },
-      toss: { avg: number, count: number },
-      serve: { avg: number, count: number },
+      metricStats: [{                 // 클럽룸별 동적 평가 항목 집계
+        metricKey: string,
+        avg: number,
+        count: number
+      }],
       overall: number,                // 가중 평균
-      absences: string[],            // 결장 포지션 목록
+      absences: string[],             // 결장 항목 key 목록
       mvpCount: number,
       comments: string[]             // 한줄평 모음
     }]
@@ -144,15 +178,16 @@ jokgu-app/
 // Evaluation (개별 평가 원본)
 {
   _id: ObjectId,
+  clubRoomId: ObjectId,               // 평가 소속 클럽룸
   matchId: ObjectId,
   evaluatorId: ObjectId,              // 평가자
   ratings: [{
     targetUserId: ObjectId,           // 피평가자
-    attack?: number,                  // 0.0~10.0 (결장이면 null)
-    defense?: number,
-    toss?: number,
-    serve?: number,
-    absences: string[],               // 해당 선수의 결장 포지션
+    metricScores: [{                  // 클럽룸별 동적 평가 항목 점수
+      metricKey: string,
+      score?: number                  // 0.0~10.0 (결장이면 null)
+    }],
+    absences: string[],               // 해당 선수의 결장 항목 key
     comment?: string,                 // 한줄평
   }],
   mvpPick: ObjectId,                  // MVP 선정
@@ -175,10 +210,16 @@ jokgu-app/
 
 **점수 계산:**
 
-- 각 포지션 점수: 0.0 ~ 10.0 (소수점 첫째 자리까지)
-- 결장(absent) 포지션은 null 처리, 평균 계산에서 제외
-- 전체 평균 = (출전한 포지션 점수 합) / (출전 포지션 수)
+- 각 평가 항목 점수: 0.0 ~ 10.0 (소수점 첫째 자리까지)
+- 결장(absent) 항목은 null 처리, 평균 계산에서 제외
+- 전체 평균 = (출전한 평가 항목 점수 합) / (출전 평가 항목 수)
 - 본인 평가는 불가 (자동 제외)
+
+**클럽룸/평가 항목 관리:**
+
+- 사용자(관리자)는 클럽룸을 생성/수정/관리할 수 있다.
+- 클럽룸 관리자는 평가 항목(포지션/지표)을 추가/삭제/정렬할 수 있다.
+- 경기/평가/순위 집계는 해당 클럽룸의 활성 평가 항목 목록을 기준으로 동작한다.
 
 **평가 종료 조건:**
 
@@ -215,9 +256,9 @@ jokgu-app/
 
 ### Step 1.2 — 공통 타입 및 DB 연결
 
-- `src/types/index.ts`에 User, Match, Evaluation, BGMTrack 타입 정의 (위 스키마 기반)
+- `src/types/index.ts`에 User, ClubRoom, Match, Evaluation, BGMTrack 타입 정의 (위 스키마 기반)
 - `src/lib/db.ts`에 MongoDB 싱글톤 연결 함수 작성
-- `src/models/` 아래 Mongoose 스키마 4개 (User, Match, Evaluation, BGMTrack) 작성
+- `src/models/` 아래 Mongoose 스키마 5개 (User, ClubRoom, Match, Evaluation, BGMTrack) 작성
 - **테스트**: 간단한 API route (`/api/health`)에서 DB 연결 확인 → `{ status: "ok", db: "connected" }` 응답
 
 ### Step 1.3 — 전역 레이아웃 및 반응형 네비게이션
@@ -249,7 +290,7 @@ jokgu-app/
 
 - `src/lib/auth.ts`에 NextAuth 설정 (KakaoProvider)
 - `src/app/api/auth/[...nextauth]/route.ts` 라우트 핸들러
-- 카카오 로그인 시 실명(kakao_account.name) 수집 → DB에 User upsert
+- 카카오 로그인 시 사용자 식별 정보만 연동하고, 닉네임은 서비스 내에서 설정 → DB에 User upsert
 - 신규 사용자는 role: "pending"으로 생성 (관리자 승인 필요)
 - **테스트**: 카카오 로그인 버튼 클릭 → 카카오 인증 → 리다이렉트 → DB에 유저 생성 확인
 
@@ -378,12 +419,11 @@ jokgu-app/
 
 ### Step 5.2 — MVP 시상대
 
-- `src/app/ranking/mvp/page.tsx` 또는 순위 페이지 내 섹션
-- **MVP 시상대 UI**: 1~3위를 시상대 형태로 표출 (2위-1위-3위 배치, 높이 차이)
-- 1위에 "POTM (Player of the Match)" 라벨
-- 경기별 MVP 히스토리 리스트
-- API: `GET /api/rankings/mvp`
-- **테스트**: 시상대 레이아웃 정상 렌더, MVP 득표수 정확성
+- 별도 MVP 전용 페이지는 두지 않고, 순위 페이지에 **점수 기반 시상대(1~3위)**를 포함
+- **시상대 기준**: 전체 평균 점수 상위 3명 (2위-1위-3위 배치, 높이 차이)
+- 경기별 MVP 히스토리는 리스트로 별도 노출 가능
+- API: `GET /api/rankings?type=overall` (시상대 데이터 재사용)
+- **테스트**: 시상대 레이아웃 정상 렌더, 상위 3명 점수 정렬 정확성
 
 ### Step 5.3 — 개인 대시보드
 
@@ -401,7 +441,7 @@ jokgu-app/
 
 - `src/app/evaluation/[matchId]/result/page.tsx`
 - 해당 경기 참여자별 포지션 점수, 전체 평균, 순위
-- MVP 표시
+- MVP 선정 선수는 이름/카드에 **MVP 마크**(배지/아이콘) 표시
 - 한줄평 익명 리스트 (누가 썼는지는 비공개)
 - API: `GET /api/matches/[id]/results`
 - **테스트**: 결과 데이터 정확성, 한줄평 노출, 결장 포지션 "-" 표시
@@ -483,7 +523,7 @@ jokgu-app/
 
 ### Step 8.1 — 전역 BGM 플레이어
 
-- `src/stores/bgmStore.ts`: Zustand 스토어 (재생 상태, 현재 곡, 볼륨, 음소거)
+- `src/store/bgmStore.ts`: Zustand 스토어 (재생 상태, 현재 곡, 볼륨, 음소거)
 - `src/components/layout/BGMPlayer.tsx`:
     - layout.tsx에 포함 → 페이지 이동해도 언마운트 안 됨
     - 화면 하단/상단 구석에 작은 이퀄라이저 아이콘

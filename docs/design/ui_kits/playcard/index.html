@@ -1,100 +1,164 @@
 <!doctype html>
 <html lang="ko">
+
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>PlayCard — UI Kit</title>
-<link rel="stylesheet" href="../../colors_and_type.css">
-<style>
-  body { margin: 0; background: #06080F; min-height: 100vh; }
-  .page { display: flex; gap: 24px; padding: 24px; align-items: flex-start; justify-content: center; flex-wrap: wrap; }
-  .phone {
-    width: 380px; height: 760px; background: var(--pc-bg);
-    border-radius: 36px; overflow: hidden; position: relative;
-    box-shadow: 0 24px 48px -12px rgba(0,0,0,.6), 0 0 0 8px #000, 0 0 0 9px #1A1A22;
-    display: flex; flex-direction: column;
-  }
-  .phone-content {
-    flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
-  }
-  .phone-content::-webkit-scrollbar { width: 0; }
-  .phone-label {
-    text-align: center; font-size: 11px; font-weight: 700; color: #8A7E66;
-    letter-spacing: .08em; text-transform: uppercase; margin-top: 10px;
-    font-family: var(--pc-font-mono);
-  }
-  .status-bar {
-    height: 36px; padding: 8px 22px; display: flex; align-items: center; justify-content: space-between;
-    font-size: 13px; font-weight: 700; color: var(--pc-ink); flex-shrink: 0;
-  }
-  .status-icons { display: flex; gap: 4px; align-items: center; font-size: 11px; }
-  /* keyframes */
-  @keyframes pulse { 0%, 100% { opacity: 1 } 50% { opacity: .4 } }
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>PlayCard — UI Kit</title>
+  <link rel="stylesheet" href="../../colors_and_type.css">
+  <style>
+    body {
+      margin: 0;
+      background: #06080F;
+      min-height: 100vh;
+    }
+
+    .page {
+      display: flex;
+      gap: 24px;
+      padding: 24px;
+      align-items: flex-start;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .phone {
+      width: 380px;
+      height: 760px;
+      background: var(--pc-bg);
+      border-radius: 36px;
+      overflow: hidden;
+      position: relative;
+      box-shadow: 0 24px 48px -12px rgba(0, 0, 0, .6), 0 0 0 8px #000, 0 0 0 9px #1A1A22;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .phone-content {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .phone-content::-webkit-scrollbar {
+      width: 0;
+    }
+
+    .phone-label {
+      text-align: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: #8A7E66;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-top: 10px;
+      font-family: var(--pc-font-mono);
+    }
+
+    .status-bar {
+      height: 36px;
+      padding: 8px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--pc-ink);
+      flex-shrink: 0;
+    }
+
+    .status-icons {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      font-size: 11px;
+    }
+
+    /* keyframes */
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: .4
+      }
+    }
+  </style>
 </head>
+
 <body>
 
-<div class="page" id="root"></div>
+  <div class="page" id="root"></div>
 
-<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js"
+    integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L"
+    crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"
+    integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm"
+    crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"
+    integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y"
+    crossorigin="anonymous"></script>
 
-<script type="text/babel" src="components.jsx"></script>
-<script type="text/babel" src="data.jsx"></script>
-<script type="text/babel" src="screens.jsx"></script>
-<script type="text/babel" src="team-matchup.jsx"></script>
-<script type="text/babel" src="team.jsx"></script>
+  <script type="text/babel" src="components.jsx"></script>
+  <script type="text/babel" src="data.jsx"></script>
+  <script type="text/babel" src="screens.jsx"></script>
+  <script type="text/babel" src="team-matchup.jsx"></script>
+  <script type="text/babel" src="team.jsx"></script>
 
-<script type="text/babel">
-const { useState } = React;
+  <script type="text/babel">
+    const { useState } = React;
 
-const Phone = ({ label, children, screen }) => (
-  <div>
-    <div className="phone-label" style={{ marginBottom: 8 }}>{label}</div>
-    <div className="phone" data-screen-label={label}>
-      <div className="status-bar">
-        <span>9:41</span>
-        <span className="status-icons">●●●● 5G ▮▮▮</span>
+    const Phone = ({ label, children, screen }) => (
+      <div>
+        <div className="phone-label" style={{ marginBottom: 8 }}>{label}</div>
+        <div className="phone" data-screen-label={label}>
+          <div className="status-bar">
+            <span>9:41</span>
+            <span className="status-icons">●●●● 5G ▮▮▮</span>
+          </div>
+          <div className="phone-content">{children}</div>
+          <BottomNav active={screen} onChange={() => { }} />
+        </div>
       </div>
-      <div className="phone-content">{children}</div>
-      <BottomNav active={screen} onChange={() => {}}/>
-    </div>
-  </div>
-);
+    );
 
-const App = () => {
-  const [home, setHome] = useState("home");
-  return (
-    <>
-      <Phone label="01 홈 / 대시보드" screen="home">
-        <Header title="PlayCard" subtitle="동호회 시즌 7주차" right={<div style={{ display: "flex", gap: 8 }}><IconMusic size={20}/><IconBell size={20}/></div>}/>
-        <HomeScreen onNav={setHome}/>
-      </Phone>
+    const App = () => {
+      const [home, setHome] = useState("home");
+      return (
+        <>
+          <Phone label="01 홈 / 대시보드" screen="home">
+            <Header title="PlayCard" subtitle="동호회 시즌 7주차" right={<div style={{ display: "flex", gap: 8 }}><IconMusic size={20} /><IconBell size={20} /></div>} />
+            <HomeScreen onNav={setHome} />
+          </Phone>
 
-      <Phone label="02 평가 입력" screen="evaluate">
-        <Header title="경기 평가" subtitle="10/28 한강체육공원 · 7명" onBack={() => {}}/>
-        <EvaluateScreen/>
-      </Phone>
+          <Phone label="02 평가 입력" screen="evaluate">
+            <Header title="경기 평가" subtitle="10/28 한강체육공원 · 7명" onBack={() => { }} />
+            <EvaluateScreen />
+          </Phone>
 
-      <Phone label="03 전체 순위" screen="rank">
-        <Header title="순위" subtitle="시즌 누적 · 7명" right={<Badge tone="ink" style={{ fontFamily: "var(--pc-font-mono)" }}>S7</Badge>}/>
-        <RankScreen/>
-      </Phone>
+          <Phone label="03 전체 순위" screen="rank">
+            <Header title="순위" subtitle="시즌 누적 · 7명" right={<Badge tone="ink" style={{ fontFamily: "var(--pc-font-mono)" }}>S7</Badge>} />
+            <RankScreen />
+          </Phone>
 
-      <Phone label="04 팀 구성" screen="team">
-        <TeamScreen/>
-      </Phone>
+          <Phone label="04 팀 구성" screen="team">
+            <TeamScreen />
+          </Phone>
 
-      <Phone label="05 내 카드 / 도감" screen="home">
-        <Header title="내 카드" subtitle="LV.12 · 시즌 7" onBack={() => {}}/>
-        <ProfileScreen/>
-      </Phone>
-    </>
-  );
-};
+          <Phone label="05 내 카드 / 도감" screen="home">
+            <Header title="내 카드" subtitle="LV.12 · 시즌 7" onBack={() => { }} />
+            <ProfileScreen />
+          </Phone>
+        </>
+      );
+    };
 
-ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
-</script>
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
 </body>
+
 </html>

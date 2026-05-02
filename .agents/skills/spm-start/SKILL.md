@@ -1,11 +1,11 @@
 ---
 name: spm-start
 description: >
-  Side Project Mate 작업 시작 커맨드.
+  playCard 작업 시작 커맨드.
   `/spm-start [SPM-번호] [작업내용]` 형태로 호출하면 Linear 이슈 기반 브랜치 생성,
   .workzones.yml 등록, 관련 MAP.md + 최근 work-logs 로딩을 한 번에 수행합니다.
   인자 없이 호출하면 대화형으로 작업 유형을 선택합니다.
-  sideProjectMate 프로젝트에서 모든 작업 시작 시 항상 이 커맨드를 먼저 실행하세요.
+  playCard 프로젝트에서 모든 작업 시작 시 항상 이 커맨드를 먼저 실행하세요.
 ---
 
 # spm-start — 작업 시작 커맨드
@@ -207,7 +207,7 @@ AI가 작업 내용을 분석하여 이슈 제목과 본문 초안을 작성합�
 
 `mcp__claude_ai_Linear__save_issue` 도구로 이슈를 생성합니다:
 
-- team: "Sideprojectmate"
+- team: "playCard"
 - title: [확정된 이슈 제목]
 - description: [확정된 이슈 본문 (Markdown)]
 - labels: 버그 수정 시 ["Bug"], 기능 개발 시 ["Feature"] (라벨이 존재하는 경우)
