@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/apiLogger';
 import { dbConnect } from '@/lib/db';
 import ClubRoom from '@/lib/models/ClubRoom';
+import { getActorIdFromSession } from '@/lib/authSession';
 import { isSportType, normalizeMetricInput, type MetricInput } from '@/lib/clubRoomValidation';
-import { canManageClubRoom, getActorIdFromRequest } from '@/lib/clubRoomAuth';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,10 +15,20 @@ type UpdateClubRoomBody = {
   positionMetrics?: MetricInput[];
 };
 
-async function _GET(
-  _request: NextRequest,
-  context: { params: { id: string } }
+function canManageClubRoom(
+  actorId: string,
+  room: { ownerId: string; managers?: string[] } | null
 ) {
+  if (!actorId || !room) {
+    return false;
+  }
+  if (room.ownerId === actorId) {
+    return true;
+  }
+  return Array.isArray(room.managers) && room.managers.includes(actorId);
+}
+
+async function _GET(_request: NextRequest, context: { params: { id: string } }) {
   await dbConnect();
 
   const { id } = context.params;
@@ -38,18 +48,12 @@ async function _GET(
 
 export const GET = withApiLogging(_GET, '/api/club-rooms/[id]');
 
-async function _PATCH(
-  request: NextRequest,
-  context: { params: { id: string } }
-) {
+async function _PATCH(request: NextRequest, context: { params: { id: string } }) {
   await dbConnect();
   const { id } = context.params;
-  const actorId = getActorIdFromRequest(request);
+  const actorId = getActorIdFromSession(request);
   if (!actorId) {
-    return NextResponse.json(
-      { success: false, message: 'x-actor-id 헤더가 필요합니다.' },
-      { status: 401 }
-    );
+    return NextResponse.json({ success: false, message: '로그인이 필요합니다.' }, { status: 401 });
   }
 
   const existing = await ClubRoom.findById(id);
@@ -60,15 +64,12 @@ async function _PATCH(
     );
   }
   if (!canManageClubRoom(actorId, existing)) {
-    return NextResponse.json(
-      { success: false, message: '수정 권한이 없습니다.' },
-      { status: 403 }
-    );
+    return NextResponse.json({ success: false, message: '수정 권한이 없습니다.' }, { status: 403 });
   }
 
   const body = (await request.json()) as UpdateClubRoomBody;
-
   const update: UpdateClubRoomBody = {};
+
   if (typeof body.name === 'string') {
     const name = body.name.trim();
     if (!name) {
@@ -79,19 +80,18 @@ async function _PATCH(
     }
     update.name = name;
   }
+
   if (typeof body.sportType === 'string') {
     const sportType = body.sportType.trim().toLowerCase();
     if (!isSportType(sportType)) {
       return NextResponse.json(
-        {
-          success: false,
-          message: `sportType은 ${['jokgu', 'soccer', 'baseball', 'etc'].join(', ')} 중 하나여야 합니다.`
-        },
+        { success: false, message: 'sportType은 jokgu, soccer, baseball, etc 중 하나여야 합니다.' },
         { status: 400 }
       );
     }
     update.sportType = sportType;
   }
+
   if (typeof body.ownerId === 'string') {
     const ownerId = body.ownerId.trim();
     if (!ownerId) {
@@ -102,9 +102,11 @@ async function _PATCH(
     }
     update.ownerId = ownerId;
   }
+
   if (Array.isArray(body.managers)) {
     update.managers = body.managers.map((manager) => manager.trim()).filter(Boolean);
   }
+
   if (Array.isArray(body.positionMetrics)) {
     const normalizedMetrics = normalizeMetricInput(body.positionMetrics);
     if (!normalizedMetrics.ok) {
@@ -143,18 +145,12 @@ async function _PATCH(
 
 export const PATCH = withApiLogging(_PATCH, '/api/club-rooms/[id]');
 
-async function _DELETE(
-  request: NextRequest,
-  context: { params: { id: string } }
-) {
+async function _DELETE(request: NextRequest, context: { params: { id: string } }) {
   await dbConnect();
   const { id } = context.params;
-  const actorId = getActorIdFromRequest(request);
+  const actorId = getActorIdFromSession(request);
   if (!actorId) {
-    return NextResponse.json(
-      { success: false, message: 'x-actor-id 헤더가 필요합니다.' },
-      { status: 401 }
-    );
+    return NextResponse.json({ success: false, message: '로그인이 필요합니다.' }, { status: 401 });
   }
 
   const existing = await ClubRoom.findById(id);
@@ -165,10 +161,7 @@ async function _DELETE(
     );
   }
   if (!canManageClubRoom(actorId, existing)) {
-    return NextResponse.json(
-      { success: false, message: '삭제 권한이 없습니다.' },
-      { status: 403 }
-    );
+    return NextResponse.json({ success: false, message: '삭제 권한이 없습니다.' }, { status: 403 });
   }
 
   const deleted = await ClubRoom.findByIdAndDelete(id).lean();
@@ -181,9 +174,7 @@ async function _DELETE(
 
   return NextResponse.json({
     success: true,
-    data: {
-      _id: deleted._id
-    }
+    data: { _id: deleted._id }
   });
 }
 
