@@ -1,0 +1,288 @@
+/* ============================================================
+   PlayCard Design System — Tokens
+   colors_and_type.css
+   Direction: B1 · Solar Amber (Dark Navy + Amber/Orange Neon)
+   ============================================================ */
+
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css");
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap");
+
+:root {
+  /* ────── BRAND COLORS ────── */
+  --pc-primary: #FFB020;          /* 앰버 네온 — 메인 액션/강조 */
+  --pc-primary-hover: #FFC04D;
+  --pc-primary-press: #E89A0A;
+  --pc-primary-soft: #FFD37A;
+  --pc-primary-tint: rgba(255,176,32,.14);
+
+  --pc-secondary: #FF5A36;        /* 오렌지 — 보조 강조/위험성 액션 */
+  --pc-secondary-hover: #FF7553;
+  --pc-secondary-press: #E0431F;
+  --pc-secondary-tint: rgba(255,90,54,.14);
+
+  --pc-accent: #FFE066;           /* 골드 — MVP/레전더리/시상 */
+  --pc-accent-deep: #F0C040;
+  --pc-accent-tint: rgba(255,224,102,.16);
+
+  /* ────── SURFACE / NEUTRAL (Dark) ────── */
+  --pc-bg: #0E1018;               /* 메인 배경 (딥 네이비) */
+  --pc-bg-deep: #161A26;          /* 한 단계 진한 */
+  --pc-surface: #1C2030;          /* 카드, 시트 표면 */
+  --pc-surface-elevated: #262B40; /* 떠 있는 시트 */
+  --pc-border: #2F3550;           /* 일반 보더 */
+  --pc-border-strong: #3D456A;    /* 진한 보더 */
+  --pc-border-glow: rgba(255,176,32,.35);
+  --pc-divider: #2F3550;
+
+  /* ────── INK (TEXT) ────── */
+  --pc-ink: #FFF8EC;              /* warm white */
+  --pc-ink-secondary: #C9BBA0;    /* sub text — 웜 그레이 */
+  --pc-ink-tertiary: #8A7E66;     /* hint, placeholder */
+  --pc-ink-disabled: #5A5240;
+  --pc-ink-on-primary: #1A1206;   /* 앰버 위 텍스트 (다크) */
+  --pc-ink-on-accent: #2A1F00;    /* 골드 위 텍스트 */
+
+  /* ────── SEMANTIC ────── */
+  --pc-success: #4ADE80;
+  --pc-success-tint: rgba(74,222,128,.14);
+  --pc-warning: #FFB020;
+  --pc-warning-tint: rgba(255,176,32,.14);
+  --pc-danger: #F87171;
+  --pc-danger-tint: rgba(248,113,113,.14);
+  --pc-info: #60A5FA;
+  --pc-info-tint: rgba(96,165,250,.14);
+
+  /* ────── RARITY / 등급 (다크 배경에서 빛나도록) ────── */
+  --pc-rarity-common: #94A3B8;
+  --pc-rarity-rare: #60A5FA;
+  --pc-rarity-epic: #C084FC;
+  --pc-rarity-legendary: #FFE066;
+  --pc-rarity-legendary-2: #FF8C42;
+  --pc-rarity-mythic: #FF5A36;
+
+  --pc-rarity-common-bg: rgba(148,163,184,.14);
+  --pc-rarity-rare-bg: rgba(96,165,250,.14);
+  --pc-rarity-epic-bg: rgba(192,132,252,.14);
+  --pc-rarity-legendary-bg: rgba(255,224,102,.14);
+
+  /* ────── TEAM COLORS ────── */
+  --pc-team-blue: #60A5FA;
+  --pc-team-blue-tint: rgba(96,165,250,.14);
+  --pc-team-red: #F87171;
+  --pc-team-red-tint: rgba(248,113,113,.14);
+
+  /* ────── TREND (한국식) ────── */
+  --pc-trend-up: #F87171;         /* 한국식: 상승=빨강 */
+  --pc-trend-down: #60A5FA;       /* 한국식: 하락=파랑 */
+  --pc-trend-flat: #8A7E66;
+
+  /* ────── TYPOGRAPHY ────── */
+  --pc-font-sans: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", sans-serif;
+  --pc-font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  --pc-font-display: "Pretendard Variable", Pretendard, sans-serif;
+
+  /* Sizes */
+  --pc-fs-xs: 11px;
+  --pc-fs-sm: 13px;
+  --pc-fs-base: 15px;
+  --pc-fs-md: 17px;
+  --pc-fs-lg: 20px;
+  --pc-fs-xl: 24px;
+  --pc-fs-2xl: 32px;
+  --pc-fs-3xl: 40px;
+  --pc-fs-4xl: 56px;
+
+  /* Weights */
+  --pc-fw-regular: 400;
+  --pc-fw-medium: 500;
+  --pc-fw-semibold: 600;
+  --pc-fw-bold: 700;
+  --pc-fw-extrabold: 800;
+  --pc-fw-black: 900;
+
+  /* Line height */
+  --pc-lh-tight: 1.15;
+  --pc-lh-snug: 1.3;
+  --pc-lh-normal: 1.5;
+  --pc-lh-relaxed: 1.65;
+
+  /* Letter spacing */
+  --pc-ls-tight: -0.02em;
+  --pc-ls-normal: -0.01em;
+  --pc-ls-wide: 0.04em;
+
+  /* ────── SPACING ────── */
+  --pc-space-1: 2px;
+  --pc-space-2: 4px;
+  --pc-space-3: 8px;
+  --pc-space-4: 12px;
+  --pc-space-5: 16px;
+  --pc-space-6: 24px;
+  --pc-space-7: 32px;
+  --pc-space-8: 48px;
+  --pc-space-9: 64px;
+  --pc-space-10: 96px;
+
+  /* ────── RADII ────── */
+  --pc-r-sm: 6px;
+  --pc-r-md: 10px;
+  --pc-r-lg: 16px;
+  --pc-r-xl: 22px;
+  --pc-r-full: 9999px;
+
+  /* ────── SHADOWS / GLOW ────── */
+  --pc-shadow-sm: 0 1px 2px rgba(0,0,0,.30);
+  --pc-shadow-md: 0 4px 14px -2px rgba(0,0,0,.45), 0 1px 2px rgba(0,0,0,.25);
+  --pc-shadow-lg: 0 12px 32px -8px rgba(0,0,0,.55), 0 2px 6px rgba(0,0,0,.30);
+  --pc-shadow-xl: 0 24px 48px -12px rgba(0,0,0,.65);
+  --pc-shadow-glow-amber: 0 0 24px rgba(255,176,32,.45), 0 4px 12px rgba(255,176,32,.25);
+  --pc-shadow-glow-orange: 0 0 22px rgba(255,90,54,.40);
+  --pc-shadow-glow-gold: 0 0 26px rgba(255,224,102,.50);
+  --pc-shadow-inset: inset 0 1px 2px rgba(0,0,0,.30);
+
+  /* ────── EASING ────── */
+  --pc-ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --pc-ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --pc-ease-decelerate: cubic-bezier(0, 0, 0.2, 1);
+  --pc-ease-accelerate: cubic-bezier(0.4, 0, 1, 1);
+
+  /* ────── DURATION ────── */
+  --pc-d-micro: 120ms;
+  --pc-d-base: 200ms;
+  --pc-d-slow: 320ms;
+  --pc-d-celebration: 800ms;
+
+  /* ────── Z-INDEX ────── */
+  --pc-z-nav: 100;
+  --pc-z-overlay: 200;
+  --pc-z-modal: 300;
+  --pc-z-toast: 400;
+}
+
+/* ============================================================
+   SEMANTIC TYPOGRAPHY — apply via classes
+   ============================================================ */
+
+.pc-display {
+  font-family: var(--pc-font-display);
+  font-size: var(--pc-fs-4xl);
+  font-weight: var(--pc-fw-black);
+  line-height: var(--pc-lh-tight);
+  letter-spacing: var(--pc-ls-tight);
+  font-style: italic;
+  color: var(--pc-ink);
+}
+
+.pc-h1 {
+  font-family: var(--pc-font-sans);
+  font-size: var(--pc-fs-2xl);
+  font-weight: var(--pc-fw-extrabold);
+  line-height: var(--pc-lh-tight);
+  letter-spacing: var(--pc-ls-tight);
+  color: var(--pc-ink);
+}
+
+.pc-h2 {
+  font-family: var(--pc-font-sans);
+  font-size: var(--pc-fs-xl);
+  font-weight: var(--pc-fw-bold);
+  line-height: var(--pc-lh-snug);
+  letter-spacing: var(--pc-ls-tight);
+  color: var(--pc-ink);
+}
+
+.pc-h3 {
+  font-family: var(--pc-font-sans);
+  font-size: var(--pc-fs-lg);
+  font-weight: var(--pc-fw-bold);
+  line-height: var(--pc-lh-snug);
+  letter-spacing: var(--pc-ls-normal);
+  color: var(--pc-ink);
+}
+
+.pc-h4 {
+  font-family: var(--pc-font-sans);
+  font-size: var(--pc-fs-md);
+  font-weight: var(--pc-fw-semibold);
+  line-height: var(--pc-lh-snug);
+  color: var(--pc-ink);
+}
+
+.pc-body {
+  font-family: var(--pc-font-sans);
+  font-size: var(--pc-fs-base);
+  font-weight: var(--pc-fw-regular);
+  line-height: var(--pc-lh-normal);
+  color: var(--pc-ink);
+}
+
+.pc-body-sm {
+  font-family: var(--pc-font-sans);
+  font-size: var(--pc-fs-sm);
+  font-weight: var(--pc-fw-regular);
+  line-height: var(--pc-lh-normal);
+  color: var(--pc-ink-secondary);
+}
+
+.pc-caption {
+  font-family: var(--pc-font-sans);
+  font-size: var(--pc-fs-xs);
+  font-weight: var(--pc-fw-semibold);
+  line-height: var(--pc-lh-snug);
+  color: var(--pc-ink-tertiary);
+  letter-spacing: var(--pc-ls-wide);
+  text-transform: uppercase;
+}
+
+.pc-label {
+  font-family: var(--pc-font-sans);
+  font-size: var(--pc-fs-sm);
+  font-weight: var(--pc-fw-semibold);
+  color: var(--pc-ink);
+}
+
+.pc-mono {
+  font-family: var(--pc-font-mono);
+  font-feature-settings: "tnum";
+}
+
+/* Score / Stat — 점수판 느낌 (이탤릭 디스플레이) */
+.pc-score {
+  font-family: var(--pc-font-display);
+  font-weight: var(--pc-fw-black);
+  font-feature-settings: "tnum";
+  letter-spacing: -0.04em;
+  font-style: italic;
+  color: var(--pc-primary);
+  text-shadow: 0 0 14px rgba(255,176,32,.45);
+}
+
+.pc-stat-num {
+  font-family: var(--pc-font-display);
+  font-weight: var(--pc-fw-extrabold);
+  font-feature-settings: "tnum";
+  letter-spacing: var(--pc-ls-tight);
+}
+
+/* Glow utilities */
+.pc-glow-amber { text-shadow: 0 0 14px rgba(255,176,32,.55); }
+.pc-glow-orange { text-shadow: 0 0 14px rgba(255,90,54,.55); }
+.pc-glow-gold { text-shadow: 0 0 14px rgba(255,224,102,.55); }
+
+/* ============================================================
+   BASE
+   ============================================================ */
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--pc-font-sans);
+  font-size: var(--pc-fs-base);
+  line-height: var(--pc-lh-normal);
+  color: var(--pc-ink);
+  background: var(--pc-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}

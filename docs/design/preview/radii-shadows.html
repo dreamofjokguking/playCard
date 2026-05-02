@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>body{margin:0;padding:30px;background:var(--pc-bg);font-family:var(--pc-font-sans);}
+.section{margin-bottom:24px;}
+.h{font-size:11px;color:var(--pc-ink-tertiary);font-weight:600;letter-spacing:.06em;text-transform:uppercase;font-family:var(--pc-font-mono);margin-bottom:10px;}
+.row{display:flex;gap:14px;align-items:flex-end;}
+.box{background:var(--pc-surface);border:1px solid var(--pc-border);width:88px;height:64px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;color:var(--pc-ink-secondary);font-family:var(--pc-font-mono);}
+.boxs{background:var(--pc-surface);width:88px;height:64px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;color:var(--pc-ink-secondary);font-family:var(--pc-font-mono);border-radius:14px;}
+</style></head>
+<body>
+  <div class="section">
+    <div class="h">Radii</div>
+    <div class="row">
+      <div class="box" style="border-radius:8px;">sm 8</div>
+      <div class="box" style="border-radius:14px;">md 14</div>
+      <div class="box" style="border-radius:20px;">lg 20</div>
+      <div class="box" style="border-radius:24px;">xl 24</div>
+      <div class="box" style="border-radius:9999px;">full</div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="h">Shadows</div>
+    <div class="row">
+      <div class="boxs" style="box-shadow:var(--pc-shadow-sm);">sm</div>
+      <div class="boxs" style="box-shadow:var(--pc-shadow-md);">md</div>
+      <div class="boxs" style="box-shadow:var(--pc-shadow-lg);">lg</div>
+      <div class="boxs" style="box-shadow:var(--pc-shadow-xl);">xl</div>
+      <div class="boxs" style="box-shadow:var(--pc-shadow-glow-gold);background:var(--pc-accent);color:#4A2F00;">glow-gold</div>
+    </div>
+  </div>
+</body></html>

@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PlayCard — 칭호 부여 연출</title>
+<link rel="stylesheet" href="../../colors_and_type.css">
+<style>
+  body { margin: 0; background: #06080F; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+  .phone {
+    width: 380px; height: 760px; background: #000;
+    border-radius: 36px; overflow: hidden; position: relative;
+    box-shadow: 0 24px 48px -12px rgba(0,0,0,.6), 0 0 0 8px #000, 0 0 0 9px #1A1A22;
+  }
+  .phone-label {
+    position: absolute; top: -28px; left: 0; right: 0; text-align: center;
+    font-size: 11px; font-weight: 700; color: #8A7E66;
+    letter-spacing: .08em; text-transform: uppercase;
+    font-family: var(--pc-font-mono);
+  }
+  @keyframes shake-pkg { 0%, 100% { transform: translateX(0) rotate(-2deg); } 25% { transform: translateX(-3px) rotate(-3deg); } 50% { transform: translateX(0) rotate(0deg); } 75% { transform: translateX(3px) rotate(2deg); } }
+  @keyframes pulse-glow { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.4); } }
+  @keyframes float-up { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  @keyframes flash-burst { 0% { opacity: 0; transform: scale(0.3); } 30% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(2); } }
+  @keyframes flip-in { from { transform: rotateY(180deg); } to { transform: rotateY(0deg); } }
+  @keyframes confetti-fall { from { transform: translateY(-30px) rotate(0deg); opacity: 1; } to { transform: translateY(800px) rotate(720deg); opacity: 0.2; } }
+  @keyframes ray-spin { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
+  @keyframes tear-top { from { transform: translateY(0) rotate(0deg); } to { transform: translateY(-300px) rotate(-12deg); } }
+  @keyframes tear-bottom { from { transform: translateY(0) rotate(0deg); } to { transform: translateY(300px) rotate(8deg); } }
+  @keyframes scale-pop { 0% { transform: scale(0.4); opacity: 0; } 60% { transform: scale(1.08); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+  @keyframes typing-cursor { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
+  @keyframes legendary-orbit { from { transform: rotate(0deg) translateX(160px) rotate(0deg); } to { transform: rotate(360deg) translateX(160px) rotate(-360deg); } }
+  @keyframes camera-zoom { 0% { transform: scale(1); } 100% { transform: scale(1.04); } }
+  @keyframes pkg-charge { 0% { transform: scale(1); filter: brightness(1); } 40% { transform: scale(1.18); filter: brightness(1.8) saturate(1.4); } 100% { transform: scale(1.1); filter: brightness(1.2) saturate(1.2); } }
+</style>
+</head>
+<body>
+
+<div style="position: relative;">
+  <div class="phone-label">칭호 부여 연출 · Tweaks로 등급 변경</div>
+  <div class="phone" data-screen-label="05 칭호 부여 연출" id="phone"></div>
+</div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="reveal.jsx"></script>
+
+<script type="text/babel">
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "rarity": "epic",
+  "autoplay": true
+}/*EDITMODE-END*/;
+
+const App = () => {
+  const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
+  const [key, setKey] = React.useState(0);
+
+  // restart on rarity change
+  React.useEffect(() => { setKey(k => k + 1); }, [tweaks.rarity]);
+
+  return (
+    <>
+      <RevealScreen key={key} rarity={tweaks.rarity} autoplay={tweaks.autoplay} onReplay={() => setKey(k => k + 1)}/>
+      <TweaksPanel title="Tweaks">
+        <TweakSection title="등급">
+          <TweakRadio label="Rarity" value={tweaks.rarity} onChange={(v) => setTweak("rarity", v)} options={[
+            { value: "common", label: "Common" },
+            { value: "rare", label: "Rare" },
+            { value: "epic", label: "Epic" },
+            { value: "legendary", label: "Legend" },
+          ]}/>
+        </TweakSection>
+        <TweakSection title="동작">
+          <TweakToggle label="자동 재생" value={tweaks.autoplay} onChange={(v) => setTweak("autoplay", v)}/>
+          <TweakButton label="다시 보기" onClick={() => setKey(k => k + 1)}/>
+        </TweakSection>
+      </TweaksPanel>
+    </>
+  );
+};
+
+ReactDOM.createRoot(document.getElementById("phone")).render(<App/>);
+</script>
+</body>
+</html>

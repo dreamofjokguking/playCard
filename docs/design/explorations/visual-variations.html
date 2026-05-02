@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PlayCard — Visual Variations</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin: 0; background: #1A1410; }
+  .phone {
+    width: 380px; height: 760px; border-radius: 36px; overflow: hidden;
+    box-shadow: 0 24px 48px -12px rgba(0,0,0,.5), 0 0 0 8px #000, 0 0 0 9px #1A1A22;
+    display: flex; flex-direction: column; position: relative;
+  }
+  .phone-content { flex: 1; overflow-y: auto; }
+  .phone-content::-webkit-scrollbar { width: 0; }
+  .status-bar {
+    height: 36px; padding: 8px 22px; display: flex; align-items: center;
+    justify-content: space-between; font-size: 13px; font-weight: 700; flex-shrink: 0;
+  }
+  .header {
+    padding: 14px 16px 10px; border-bottom: 1px solid;
+    display: flex; align-items: center; flex-shrink: 0;
+  }
+  .nav {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    border-top: 1px solid; padding: 6px 4px 10px;
+    display: flex; justify-content: space-around;
+  }
+  .nav-it {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    padding: 8px 12px; border-radius: 12px; font-size: 10px; font-weight: 600;
+    min-width: 56px;
+  }
+</style>
+</head>
+<body>
+
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="themes.jsx"></script>
+
+<script type="text/babel">
+const NAV_ITEMS = ["홈", "평가", "순위", "팀구성", "관리"];
+
+const ThemedPhone = ({ t }) => (
+  <div className="phone" style={{ background: t.bg }} data-screen-label={t.name}>
+    <div className="status-bar" style={{ color: t.ink, background: t.bg }}>
+      <span>9:41</span>
+      <span style={{ fontSize: 11 }}>●●●● 5G ▮▮▮</span>
+    </div>
+    <div className="header" style={{ background: t.bg, borderColor: t.border }}>
+      <div style={{ flex: 1 }}>
+        <div style={{
+          fontSize: 18, fontWeight: 800, letterSpacing: "-0.02em", color: t.ink,
+          textShadow: t.neonText ? `0 0 14px ${t.primary}77` : "none",
+        }}>PlayCard</div>
+        <div style={{ fontSize: 12, color: t.inkTertiary, fontWeight: 600, marginTop: 1 }}>동호회 시즌 7주차</div>
+      </div>
+    </div>
+    <div className="phone-content">
+      <ThemedHome t={t}/>
+    </div>
+    <div className="nav" style={{ background: t.surface, borderColor: t.border }}>
+      {NAV_ITEMS.map((label, i) => {
+        const active = i === 0;
+        return (
+          <div key={label} className="nav-it" style={{
+            background: active ? t.primaryTint : "transparent",
+            color: active ? t.primary : t.inkTertiary,
+            boxShadow: active && t.neonText ? `0 0 12px ${t.primary}55` : "none",
+          }}>
+            <div style={{ fontSize: 18 }}>{["⌂", "★", "🏆", "👥", "⚙"][i]}</div>
+            <span>{label}</span>
+          </div>
+        );
+      })}
+    </div>
+  </div>
+);
+
+const App = () => (
+  <DesignCanvas title="PlayCard — 네온 시리즈 v2" subtitle="3가지 네온 컨셉 비교 (Variation 3)">
+    <DCSection id="variations" title="Neon · 3 컨셉">
+      <DCArtboard id="b1-amber" label="B1 · Solar Amber (다크+앤버)" width={380} height={760}>
+        <ThemedPhone t={THEMES.b1}/>
+      </DCArtboard>
+      <DCArtboard id="b2-green" label="B2 · Toxic Green (메인 ★ 가시성 개선)" width={380} height={760}>
+        <ThemedPhone t={THEMES.b2}/>
+      </DCArtboard>
+      <DCArtboard id="b3-light" label="B3 · Bright Neon (화이트 베이스)" width={380} height={760}>
+        <ThemedPhone t={THEMES.b3}/>
+      </DCArtboard>
+    </DCSection>
+  </DesignCanvas>
+);
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+body{margin:0;padding:24px;background:var(--pc-surface);font-family:var(--pc-font-sans);}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px;}
+.lbl{font-size:10px;color:var(--pc-ink-tertiary);font-weight:600;letter-spacing:.06em;text-transform:uppercase;width:80px;font-family:var(--pc-font-mono);}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:9999px;font-size:11px;font-weight:700;letter-spacing:.04em;}
+.dot{width:6px;height:6px;border-radius:50%;}
+</style></head>
+<body>
+  <div class="row"><span class="lbl">Status</span>
+    <span class="badge" style="background:var(--pc-primary-tint);color:var(--pc-primary);"><span class="dot" style="background:var(--pc-primary);animation:pulse 1.4s infinite;"></span>평가 진행중</span>
+    <span class="badge" style="background:var(--pc-success-tint);color:var(--pc-success);">완료</span>
+    <span class="badge" style="background:var(--pc-bg-deep);color:var(--pc-ink-secondary);">대기</span>
+    <span class="badge" style="background:var(--pc-danger-tint);color:var(--pc-danger);">취소</span>
+  </div>
+  <div class="row"><span class="lbl">Rarity</span>
+    <span class="badge" style="background:#F3F4F6;color:#6B7280;">⚪ 일반</span>
+    <span class="badge" style="background:#E5EFFE;color:#2563EB;">🔷 희귀</span>
+    <span class="badge" style="background:#F3E8FF;color:#7C3AED;">💎 영웅</span>
+    <span class="badge" style="background:linear-gradient(135deg,#FFD24A,#FF8C42);color:#4A2F00;box-shadow:0 0 12px rgba(244,183,64,.4);">✨ 전설</span>
+  </div>
+  <div class="row"><span class="lbl">Position</span>
+    <span class="badge" style="background:var(--pc-info-tint);color:var(--pc-info);">공격</span>
+    <span class="badge" style="background:var(--pc-secondary-tint);color:var(--pc-secondary);">수비</span>
+    <span class="badge" style="background:var(--pc-warning-tint);color:var(--pc-accent-deep);">토스</span>
+    <span class="badge" style="background:#F3E8FF;color:#7C3AED;">서브</span>
+  </div>
+  <div class="row"><span class="lbl">EXP</span>
+    <span class="badge" style="background:var(--pc-ink);color:#fff;font-family:var(--pc-font-mono);">LV.12</span>
+    <span class="badge" style="background:var(--pc-primary);color:#fff;">+120 EXP</span>
+    <span class="badge" style="background:var(--pc-accent);color:#4A2F00;">🏆 POTM</span>
+  </div>
+</body></html>

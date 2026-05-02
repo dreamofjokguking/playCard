@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body{margin:0;padding:24px;background:var(--pc-surface);font-family:var(--pc-font-sans);}
+  .row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+  .card{border-radius:14px;padding:16px;min-height:120px;display:flex;flex-direction:column;justify-content:space-between;color:#fff;position:relative;overflow:hidden;}
+  .common{background:linear-gradient(135deg,#9CA3AF,#6B7280);}
+  .rare{background:linear-gradient(135deg,#60A5FA,#2563EB);}
+  .epic{background:linear-gradient(135deg,#C084FC,#7C3AED);}
+  .legend{background:linear-gradient(135deg,#FFD24A,#FF8C42);box-shadow:var(--pc-shadow-glow-gold);}
+  .name{font-weight:800;font-size:15px;letter-spacing:-0.01em;}
+  .ko{font-size:11px;opacity:.9;font-weight:600;letter-spacing:.06em;text-transform:uppercase;}
+  .pct{font-size:22px;font-weight:900;font-style:italic;font-family:var(--pc-font-display);}
+</style></head>
+<body>
+  <div class="row">
+    <div class="card common"><div><div class="ko">Common</div><div class="name">일반</div></div><div class="pct">60%</div></div>
+    <div class="card rare"><div><div class="ko">Rare</div><div class="name">희귀</div></div><div class="pct">25%</div></div>
+    <div class="card epic"><div><div class="ko">Epic</div><div class="name">영웅</div></div><div class="pct">12%</div></div>
+    <div class="card legend" style="color:#4A2F00;"><div><div class="ko">Legendary</div><div class="name">전설</div></div><div class="pct">3%</div></div>
+  </div>
+</body></html>

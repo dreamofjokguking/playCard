@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+body{margin:0;padding:30px;background:var(--pc-bg);font-family:var(--pc-font-sans);display:flex;gap:30px;align-items:center;flex-wrap:wrap;}
+.lockup{display:flex;align-items:center;gap:12px;}
+.mark{width:54px;height:54px;border-radius:14px;background:var(--pc-primary);position:relative;display:flex;align-items:center;justify-content:center;box-shadow:var(--pc-shadow-md);transform:rotate(-4deg);}
+.mark::before{content:"";position:absolute;width:36px;height:46px;background:#fff;border-radius:6px;transform:rotate(8deg);left:11px;top:4px;}
+.mark::after{content:"";position:absolute;width:36px;height:46px;background:var(--pc-accent);border-radius:6px;transform:rotate(-2deg);left:7px;top:6px;border:1.5px solid var(--pc-ink);}
+.wm{font-family:var(--pc-font-display);font-weight:900;font-size:32px;letter-spacing:-0.04em;color:var(--pc-ink);font-style:italic;}
+.wm span{color:var(--pc-primary);}
+.icon-app{width:80px;height:80px;border-radius:18px;background:var(--pc-primary);box-shadow:var(--pc-shadow-md);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+.icon-app::before{content:"";position:absolute;width:46px;height:60px;background:#fff;border-radius:6px;transform:rotate(-8deg);left:14px;top:8px;}
+.icon-app::after{content:"";position:absolute;width:46px;height:60px;background:var(--pc-accent);border-radius:6px;transform:rotate(6deg);left:20px;top:12px;border:2px solid var(--pc-ink);}
+.dark .icon-app{background:var(--pc-ink);}
+.lbl{font-size:10px;color:var(--pc-ink-tertiary);text-align:center;font-family:var(--pc-font-mono);font-weight:600;margin-top:8px;letter-spacing:.06em;}
+.col{display:flex;flex-direction:column;align-items:center;}
+</style></head>
+<body>
+  <div class="lockup">
+    <div class="mark"></div>
+    <div class="wm">Play<span>Card</span></div>
+  </div>
+  <div class="col"><div class="icon-app"></div><div class="lbl">APP ICON</div></div>
+  <div class="col dark"><div class="icon-app"></div><div class="lbl">DARK</div></div>
+</body></html>

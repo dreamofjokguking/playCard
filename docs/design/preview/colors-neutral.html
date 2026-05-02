@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body{margin:0;padding:24px;background:var(--pc-surface);font-family:var(--pc-font-sans);}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+  .sw{border-radius:12px;padding:14px;min-height:100px;display:flex;flex-direction:column;justify-content:space-between;border:1px solid var(--pc-border);}
+  .name{font-weight:600;font-size:13px;}
+  .hex{font-family:var(--pc-font-mono);font-size:11px;color:var(--pc-ink-tertiary);}
+  .row2{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:12px;}
+  .ink{border-radius:12px;padding:14px;min-height:60px;display:flex;flex-direction:column;justify-content:space-between;}
+</style></head>
+<body>
+  <div class="grid">
+    <div class="sw" style="background:var(--pc-bg);"><div class="name">bg</div><div class="hex">#FAF6EE</div></div>
+    <div class="sw" style="background:var(--pc-bg-deep);"><div class="name">bg-deep</div><div class="hex">#F2EBDB</div></div>
+    <div class="sw" style="background:var(--pc-surface);"><div class="name">surface</div><div class="hex">#FFFBF5</div></div>
+    <div class="sw" style="background:#fff;"><div class="name">surface-elevated</div><div class="hex">#FFFFFF</div></div>
+  </div>
+  <div class="row2">
+    <div class="ink" style="background:var(--pc-ink);color:#fff;"><div class="name">ink</div><div class="hex" style="color:#bbb;">#1A1410</div></div>
+    <div class="ink" style="background:var(--pc-ink-secondary);color:#fff;"><div class="name">ink-secondary</div><div class="hex" style="color:#ddd;">#5C544C</div></div>
+    <div class="ink" style="background:var(--pc-ink-tertiary);color:#fff;"><div class="name">ink-tertiary</div><div class="hex" style="color:#eee;">#908578</div></div>
+    <div class="ink" style="background:var(--pc-border);color:var(--pc-ink);"><div class="name">border</div><div class="hex">#EFE7D6</div></div>
+  </div>
+</body></html>

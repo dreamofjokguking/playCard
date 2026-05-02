@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+body{margin:0;padding:24px;background:var(--pc-bg);font-family:var(--pc-font-sans);}
+.card{background:var(--pc-surface);border:1px solid var(--pc-border);border-radius:14px;padding:16px;box-shadow:var(--pc-shadow-md);max-width:520px;}
+.row{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+.row:last-child{margin-bottom:0;}
+.pos{width:42px;font-size:12px;font-weight:700;color:var(--pc-ink-secondary);}
+.ctrl{flex:1;display:flex;align-items:center;gap:8px;}
+.btn-tiny{width:24px;height:24px;border-radius:8px;border:1.5px solid var(--pc-border-strong);background:var(--pc-surface);font-weight:700;color:var(--pc-ink);cursor:pointer;}
+.track{flex:1;height:6px;background:var(--pc-bg-deep);border-radius:3px;position:relative;}
+.fill{position:absolute;left:0;top:0;height:100%;background:linear-gradient(90deg,var(--pc-primary),var(--pc-accent));border-radius:3px;}
+.thumb{position:absolute;top:50%;width:20px;height:20px;border-radius:50%;background:#fff;border:2.5px solid var(--pc-primary);transform:translate(-50%,-50%);box-shadow:var(--pc-shadow-md);}
+.val{font-family:var(--pc-font-display);font-style:italic;font-weight:900;font-size:20px;color:var(--pc-primary);min-width:48px;text-align:right;font-feature-settings:"tnum";}
+.absent{opacity:.4;}
+.absent .val{color:var(--pc-ink-tertiary);font-style:normal;font-size:14px;}
+.input{width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--pc-border);font-size:14px;font-family:inherit;background:#fff;}
+.input:focus{outline:none;border-color:var(--pc-primary);box-shadow:0 0 0 3px var(--pc-primary-tint);}
+</style></head>
+<body>
+  <div class="card">
+    <div class="row"><span class="pos">공격</span><div class="ctrl"><button class="btn-tiny">−</button><div class="track"><div class="fill" style="width:84%"></div><div class="thumb" style="left:84%"></div></div><button class="btn-tiny">+</button></div><span class="val">8.4</span></div>
+    <div class="row"><span class="pos">수비</span><div class="ctrl"><button class="btn-tiny">−</button><div class="track"><div class="fill" style="width:71%"></div><div class="thumb" style="left:71%"></div></div><button class="btn-tiny">+</button></div><span class="val">7.1</span></div>
+    <div class="row absent"><span class="pos">토스</span><div class="ctrl"><div class="track"></div></div><span class="val">결장</span></div>
+    <div class="row"><span class="pos">서브</span><div class="ctrl"><button class="btn-tiny">−</button><div class="track"><div class="fill" style="width:60%"></div><div class="thumb" style="left:60%"></div></div><button class="btn-tiny">+</button></div><span class="val">6.0</span></div>
+    <input class="input" placeholder="오늘 이 선수에 대해 한마디!" style="margin-top:6px;"/>
+  </div>
+</body></html>

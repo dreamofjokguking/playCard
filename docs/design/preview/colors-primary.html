@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body{margin:0;padding:24px;background:var(--pc-surface);font-family:var(--pc-font-sans);}
+  .row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+  .swatch{border-radius:14px;padding:18px;color:var(--pc-ink-on-primary);box-shadow:var(--pc-shadow-md);min-height:130px;display:flex;flex-direction:column;justify-content:space-between;}
+  .name{font-weight:700;font-size:15px;letter-spacing:-0.01em;}
+  .hex{font-family:var(--pc-font-mono);font-size:12px;opacity:.85;margin-top:2px;}
+  .role{font-size:11px;opacity:.85;margin-top:auto;letter-spacing:.04em;text-transform:uppercase;font-weight:600;}
+</style></head>
+<body>
+  <div class="row">
+    <div class="swatch" style="background:var(--pc-primary);">
+      <div><div class="name">족구 오렌지 / Primary</div><div class="hex">#FF5C39</div></div>
+      <div class="role">CTA · 강조 · 액션</div>
+    </div>
+    <div class="swatch" style="background:var(--pc-secondary);">
+      <div><div class="name">코트 그린 / Secondary</div><div class="hex">#1E9E5C</div></div>
+      <div class="role">완료 · 출석 · 성공</div>
+    </div>
+    <div class="swatch" style="background:var(--pc-accent);color:var(--pc-ink-on-accent);">
+      <div><div class="name">골드 / Accent</div><div class="hex">#F4B740</div></div>
+      <div class="role">MVP · 레전더리 · 시상</div>
+    </div>
+  </div>
+</body></html>
