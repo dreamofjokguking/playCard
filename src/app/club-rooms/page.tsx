@@ -1,11 +1,12 @@
 'use client';
 
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 
 type PositionMetric = {
   key: string;
   label: string;
   order: number;
+  isActive?: boolean;
 };
 
 type ClubRoom = {
@@ -24,29 +25,21 @@ type ApiResponse<T> = {
 };
 
 function toUserMessage(status: number, fallback?: string) {
-  if (status === 401) {
-    return '인증 정보가 필요합니다. actorId를 확인해주세요.';
-  }
-  if (status === 403) {
-    return '권한이 없습니다. owner 또는 manager 계정으로 시도해주세요.';
-  }
-  if (status === 404) {
-    return '대상을 찾을 수 없습니다. 목록을 새로고침해주세요.';
-  }
-  if (status === 400) {
-    return fallback || '입력값을 확인해주세요.';
-  }
-  if (status >= 500) {
-    return '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
-  }
+  if (status === 401) return '로그인이 필요합니다.';
+  if (status === 403) return '권한이 없습니다. owner 또는 manager 계정으로 로그인하세요.';
+  if (status === 404) return '대상을 찾을 수 없습니다.';
+  if (status === 400) return fallback || '입력값을 확인하세요.';
+  if (status >= 500) return '서버 오류가 발생했습니다.';
   return fallback || '요청 처리에 실패했습니다.';
 }
 
 export default function ClubRoomsPage() {
-  const [name, setName] = useState('토요 저녁 풋살');
+  const [name, setName] = useState('주요 스포츠 모임');
   const [sportType, setSportType] = useState('soccer');
   const [ownerId, setOwnerId] = useState('kimis0719');
-  const [actorId, setActorId] = useState('kimis0719');
+  const [sessionUserId, setSessionUserId] = useState('kimis0719');
+  const [sessionStateUserId, setSessionStateUserId] = useState<string | null>(null);
+
   const [rooms, setRooms] = useState<ClubRoom[]>([]);
   const [selectedRoom, setSelectedRoom] = useState<ClubRoom | null>(null);
   const [editName, setEditName] = useState('');
@@ -54,61 +47,96 @@ export default function ClubRoomsPage() {
   const [editMetrics, setEditMetrics] = useState<PositionMetric[]>([]);
   const [newMetricKey, setNewMetricKey] = useState('');
   const [newMetricLabel, setNewMetricLabel] = useState('');
+
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
   const [updating, setUpdating] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [message, setMessage] = useState('');
+
+  const canManageSelectedRoom = useMemo(() => {
+    if (!selectedRoom || !sessionStateUserId) {
+      return false;
+    }
+    return (
+      selectedRoom.ownerId === sessionStateUserId ||
+      selectedRoom.managers.includes(sessionStateUserId)
+    );
+  }, [selectedRoom, sessionStateUserId]);
 
   async function fetchRooms() {
-    try {
-      const res = await fetch('/api/club-rooms', { cache: 'no-store' });
-      const json = (await res.json()) as ApiResponse<ClubRoom[]>;
-      if (!res.ok || !json.success || !json.data) {
-        setMessage(toUserMessage(res.status, json.message || '목록 조회 실패'));
-        return;
-      }
-      setRooms(json.data);
-    } catch (error) {
-      const reason = error instanceof Error ? error.message : '네트워크 오류';
-      setMessage(`목록 요청 실패: ${reason}`);
+    const res = await fetch('/api/club-rooms', { cache: 'no-store' });
+    const json = (await res.json()) as ApiResponse<ClubRoom[]>;
+    if (!res.ok || !json.success || !json.data) {
+      setMessage(toUserMessage(res.status, json.message || '목록 조회 실패'));
+      return;
     }
+    setRooms(json.data);
   }
 
   async function fetchRoomById(id: string) {
-    try {
-      const roomId = encodeURIComponent(String(id));
-      const res = await fetch(`/api/club-rooms/${roomId}`, { cache: 'no-store' });
-      const json = (await res.json()) as ApiResponse<ClubRoom>;
-      if (!res.ok || !json.success || !json.data) {
-        setMessage(toUserMessage(res.status, json.message || '단건 조회 실패'));
-        return;
-      }
-      setSelectedRoom(json.data);
-      setEditName(json.data.name);
-      setEditSportType(json.data.sportType);
-      setEditMetrics(json.data.positionMetrics ?? []);
-      setMessage(`단건 조회 성공: ${json.data._id}`);
-    } catch (error) {
-      const reason = error instanceof Error ? error.message : '네트워크 오류';
-      setMessage(`단건 조회 요청 실패: ${reason}`);
+    const roomId = encodeURIComponent(String(id));
+    const res = await fetch(`/api/club-rooms/${roomId}`, { cache: 'no-store' });
+    const json = (await res.json()) as ApiResponse<ClubRoom>;
+    if (!res.ok || !json.success || !json.data) {
+      setMessage(toUserMessage(res.status, json.message || '상세 조회 실패'));
+      return;
     }
+    setSelectedRoom(json.data);
+    setEditName(json.data.name);
+    setEditSportType(json.data.sportType);
+    setEditMetrics(json.data.positionMetrics ?? []);
+    setMessage(`상세 조회 성공: ${json.data._id}`);
+  }
+
+  async function fetchSession() {
+    const res = await fetch('/api/auth/session', { cache: 'no-store' });
+    const json = (await res.json()) as ApiResponse<{ userId: string | null }>;
+    if (json.success && json.data) {
+      setSessionStateUserId(json.data.userId);
+    }
+  }
+
+  async function signInSession() {
+    const res = await fetch('/api/auth/session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: sessionUserId })
+    });
+    const json = (await res.json()) as ApiResponse<{ userId: string }>;
+    if (!res.ok || !json.success) {
+      setMessage(json.message || '세션 로그인 실패');
+      return;
+    }
+    setMessage(`세션 로그인: ${json.data?.userId}`);
+    await fetchSession();
+  }
+
+  async function signOutSession() {
+    const res = await fetch('/api/auth/session', { method: 'DELETE' });
+    const json = (await res.json()) as ApiResponse<{ signedOut: boolean }>;
+    if (!res.ok || !json.success) {
+      setMessage(json.message || '세션 로그아웃 실패');
+      return;
+    }
+    setMessage('세션 로그아웃');
+    await fetchSession();
   }
 
   async function updateSelectedRoom() {
     if (!selectedRoom?._id) {
-      setMessage('먼저 단건 조회를 해주세요.');
+      setMessage('먼저 상세 조회를 해주세요.');
       return;
     }
-
+    if (!canManageSelectedRoom) {
+      setMessage('수정 권한이 없습니다.');
+      return;
+    }
     setUpdating(true);
     try {
       const roomId = encodeURIComponent(String(selectedRoom._id));
       const res = await fetch(`/api/club-rooms/${roomId}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-actor-id': actorId
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: editName,
           sportType: editSportType,
@@ -116,22 +144,14 @@ export default function ClubRoomsPage() {
         })
       });
       const json = (await res.json()) as ApiResponse<ClubRoom>;
-      if (!res.ok) {
-        setMessage(`수정 실패(${res.status}): ${json.message || '요청 실패'}`);
+      if (!res.ok || !json.success || !json.data) {
+        setMessage(toUserMessage(res.status, json.message || '수정 실패'));
         return;
       }
-      if (!json.success || !json.data) {
-        setMessage(json.message || '수정 실패');
-        return;
-      }
-
       setSelectedRoom(json.data);
       setEditMetrics(json.data.positionMetrics ?? []);
       setMessage(`수정 성공: ${json.data._id}`);
       await fetchRooms();
-    } catch (error) {
-      const reason = error instanceof Error ? error.message : '네트워크 오류';
-      setMessage(`수정 요청 실패: ${reason}`);
     } finally {
       setUpdating(false);
     }
@@ -139,80 +159,61 @@ export default function ClubRoomsPage() {
 
   async function deleteSelectedRoom() {
     if (!selectedRoom?._id) {
-      setMessage('먼저 단건 조회를 해주세요.');
+      setMessage('먼저 상세 조회를 해주세요.');
       return;
     }
-
-    const ok = window.confirm('선택한 클럽룸을 삭제할까요?');
-    if (!ok) {
-      setMessage('삭제를 취소했습니다.');
+    if (!canManageSelectedRoom) {
+      setMessage('삭제 권한이 없습니다.');
       return;
     }
-
+    if (!window.confirm('선택한 클럽룸을 삭제할까요?')) {
+      return;
+    }
     setDeleting(true);
-    setMessage('삭제 요청 중...');
     try {
       const roomId = encodeURIComponent(String(selectedRoom._id));
-      const res = await fetch(`/api/club-rooms/${roomId}`, {
-        method: 'DELETE',
-        headers: {
-          'x-actor-id': actorId
-        }
-      });
+      const res = await fetch(`/api/club-rooms/${roomId}`, { method: 'DELETE' });
       const json = (await res.json()) as ApiResponse<{ _id: string }>;
-      if (!res.ok) {
-        const msg = `삭제 실패(${res.status}): ${json.message || '요청 실패'}`;
-        setMessage(msg);
-        window.alert(msg);
+      if (!res.ok || !json.success) {
+        setMessage(toUserMessage(res.status, json.message || '삭제 실패'));
         return;
       }
-      if (!json.success) {
-        const msg = json.message || '삭제 실패';
-        setMessage(msg);
-        window.alert(msg);
-        return;
-      }
-
-      const successMsg = `삭제 성공: ${selectedRoom._id}`;
-      setMessage(successMsg);
-      window.alert(successMsg);
+      setMessage(`삭제 성공: ${selectedRoom._id}`);
       setSelectedRoom(null);
       setEditName('');
       setEditSportType('');
       setEditMetrics([]);
       await fetchRooms();
-    } catch (error) {
-      const reason = error instanceof Error ? error.message : '네트워크 오류';
-      const msg = `삭제 요청 실패: ${reason}`;
-      setMessage(msg);
-      window.alert(msg);
     } finally {
       setDeleting(false);
     }
   }
 
   function addMetric() {
+    if (!canManageSelectedRoom) {
+      setMessage('메트릭 편집 권한이 없습니다.');
+      return;
+    }
     const key = newMetricKey.trim();
     const label = newMetricLabel.trim();
     if (!key || !label) {
-      setMessage('메트릭 key, label을 입력하세요.');
+      setMessage('metric key, label을 입력하세요.');
       return;
     }
     if (editMetrics.some((metric) => metric.key === key)) {
-      setMessage('같은 key가 이미 있습니다.');
+      setMessage('이미 존재하는 metric key입니다.');
       return;
     }
-    const metric: PositionMetric = {
-      key,
-      label,
-      order: editMetrics.length + 1
-    };
-    setEditMetrics((prev) => [...prev, metric]);
+    setEditMetrics((prev) => [...prev, { key, label, order: prev.length + 1, isActive: true }]);
     setNewMetricKey('');
     setNewMetricLabel('');
   }
 
   function removeMetric(key: string) {
+    if (!canManageSelectedRoom) {
+      setMessage('메트릭 편집 권한이 없습니다.');
+      return;
+    }
     setEditMetrics((prev) =>
       prev
         .filter((metric) => metric.key !== key)
@@ -223,8 +224,6 @@ export default function ClubRoomsPage() {
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setLoading(true);
-    setMessage('');
-
     try {
       const res = await fetch('/api/club-rooms', {
         method: 'POST',
@@ -241,15 +240,10 @@ export default function ClubRoomsPage() {
         })
       });
       const json = (await res.json()) as ApiResponse<{ _id: string }>;
-      if (!res.ok) {
+      if (!res.ok || !json.success) {
         setMessage(toUserMessage(res.status, json.message || '생성 실패'));
         return;
       }
-      if (!json.success) {
-        setMessage(json.message || '생성 실패');
-        return;
-      }
-
       setMessage('클럽룸 생성 성공');
       await fetchRooms();
     } finally {
@@ -259,43 +253,42 @@ export default function ClubRoomsPage() {
 
   useEffect(() => {
     fetchRooms().catch(() => setMessage('목록 조회 실패'));
+    fetchSession().catch(() => setMessage('세션 조회 실패'));
   }, []);
 
   return (
     <main>
       <h1>클럽룸 테스트 페이지</h1>
-      <p>UI에서 생성/목록/단건 조회를 바로 확인할 수 있습니다.</p>
+      <p>CRUD + 세션 기반 권한 검증을 한 화면에서 테스트합니다.</p>
 
       <section className="card">
+        <h2>세션 설정</h2>
+        <div style={{ display: 'grid', gap: 8 }}>
+          <input
+            value={sessionUserId}
+            onChange={(e) => setSessionUserId(e.target.value)}
+            placeholder="session user id"
+          />
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={signInSession}>로그인(세션 설정)</button>
+            <button onClick={signOutSession}>로그아웃(세션 해제)</button>
+          </div>
+          <p>
+            현재 세션 사용자: <strong>{sessionStateUserId ?? '(없음)'}</strong>
+          </p>
+        </div>
+      </section>
+
+      <section className="card" style={{ marginTop: 16 }}>
         <h2>클럽룸 생성</h2>
         <form onSubmit={onSubmit} style={{ display: 'grid', gap: 12 }}>
           <input value={name} onChange={(e) => setName(e.target.value)} placeholder="name" />
-          <input
-            value={sportType}
-            onChange={(e) => setSportType(e.target.value)}
-            placeholder="sportType"
-          />
-          <input
-            value={ownerId}
-            onChange={(e) => setOwnerId(e.target.value)}
-            placeholder="ownerId"
-          />
+          <input value={sportType} onChange={(e) => setSportType(e.target.value)} placeholder="sportType" />
+          <input value={ownerId} onChange={(e) => setOwnerId(e.target.value)} placeholder="ownerId" />
           <button type="submit" disabled={loading}>
             {loading ? '생성 중...' : '생성'}
           </button>
         </form>
-      </section>
-
-      <section className="card" style={{ marginTop: 16 }}>
-        <h2>권한 테스트 설정</h2>
-        <input
-          value={actorId}
-          onChange={(e) => setActorId(e.target.value)}
-          placeholder="actorId (x-actor-id)"
-        />
-        <p style={{ marginTop: 8 }}>
-          현재 actorId: <strong>{actorId || '(비어있음)'}</strong>
-        </p>
       </section>
 
       <section className="card" style={{ marginTop: 16 }}>
@@ -305,33 +298,35 @@ export default function ClubRoomsPage() {
           {rooms.map((room) => (
             <li key={room._id}>
               <strong>{room.name}</strong> ({room.sportType}) / owner: {room.ownerId}{' '}
-              <button onClick={() => fetchRoomById(room._id)}>단건 조회</button>
+              <button onClick={() => fetchRoomById(room._id)}>상세 조회</button>
             </li>
           ))}
         </ul>
       </section>
 
       <section className="card" style={{ marginTop: 16 }}>
-        <h2>단건 조회 결과</h2>
+        <h2>상세 조회 결과</h2>
         <pre>{selectedRoom ? JSON.stringify(selectedRoom, null, 2) : '조회 전'}</pre>
+        <p>
+          편집 권한: <strong>{canManageSelectedRoom ? '허용' : '없음'}</strong>
+        </p>
         <div style={{ display: 'grid', gap: 8, marginTop: 12 }}>
-          <input
-            value={editName}
-            onChange={(e) => setEditName(e.target.value)}
-            placeholder="수정할 name"
-          />
+          <input value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="수정할 name" />
           <input
             value={editSportType}
             onChange={(e) => setEditSportType(e.target.value)}
             placeholder="수정할 sportType"
           />
+
           <div style={{ border: '1px solid #ddd', borderRadius: 8, padding: 8 }}>
             <strong>positionMetrics</strong>
             <ul className="check-list">
               {editMetrics.map((metric) => (
                 <li key={metric.key}>
                   {metric.key} / {metric.label} / order {metric.order}{' '}
-                  <button onClick={() => removeMetric(metric.key)}>삭제</button>
+                  <button onClick={() => removeMetric(metric.key)} disabled={!canManageSelectedRoom}>
+                    삭제
+                  </button>
                 </li>
               ))}
             </ul>
@@ -346,13 +341,16 @@ export default function ClubRoomsPage() {
                 onChange={(e) => setNewMetricLabel(e.target.value)}
                 placeholder="new metric label (e.g. 패스)"
               />
-              <button onClick={() => addMetric()}>메트릭 추가</button>
+              <button onClick={() => addMetric()} disabled={!canManageSelectedRoom}>
+                메트릭 추가
+              </button>
             </div>
           </div>
-          <button onClick={() => updateSelectedRoom()} disabled={updating || deleting}>
+
+          <button onClick={() => updateSelectedRoom()} disabled={updating || deleting || !canManageSelectedRoom}>
             {updating ? '수정 중...' : '선택 클럽룸 수정'}
           </button>
-          <button onClick={() => deleteSelectedRoom()} disabled={updating || deleting}>
+          <button onClick={() => deleteSelectedRoom()} disabled={updating || deleting || !canManageSelectedRoom}>
             {deleting ? '삭제 중...' : '선택 클럽룸 삭제'}
           </button>
         </div>

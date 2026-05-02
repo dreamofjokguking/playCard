@@ -9,6 +9,7 @@
 | Ping | `/api/ping` | `ping/route.ts` |
 | Health (DB) | `/api/health` | `health/route.ts` |
 | Health (Cloudinary) | `/api/health/cloudinary` | `health/cloudinary/route.ts` |
+| Auth Session | `/api/auth/session` | `auth/session/route.ts` (GET, POST, DELETE) |
 | Club Rooms | `/api/club-rooms` | `club-rooms/route.ts` |
 | Club Room Detail | `/api/club-rooms/[id]` | `club-rooms/[id]/route.ts` (GET, PATCH, DELETE) |
 

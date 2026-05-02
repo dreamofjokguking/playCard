@@ -16,14 +16,8 @@ type CreateClubRoomBody = {
 
 async function _GET(_request: NextRequest) {
   await dbConnect();
-
-  // Bootstrap 단계: 목록은 최신 50개로 제한
   const rooms = await ClubRoom.find({}).sort({ createdAt: -1 }).limit(50).lean();
-
-  return NextResponse.json({
-    success: true,
-    data: rooms
-  });
+  return NextResponse.json({ success: true, data: rooms });
 }
 
 async function _POST(request: NextRequest) {
@@ -47,7 +41,7 @@ async function _POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        message: `sportType은 ${['jokgu', 'soccer', 'baseball', 'etc'].join(', ')} 중 하나여야 합니다.`
+        message: 'sportType은 jokgu, soccer, baseball, etc 중 하나여야 합니다.'
       },
       { status: 400 }
     );
