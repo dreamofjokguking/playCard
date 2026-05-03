@@ -30,26 +30,38 @@ export default function AdminPage() {
   const hasClubAdminAccess = (me?.managedClubRooms?.length ?? 0) > 0;
 
   return (
-    <section className="card">
-      <h1>관리</h1>
-      <p>
-        서비스 관리자와 클럽 관리자의 기능을 분리합니다. 현재 권한:
-        <strong>{me ? ` ${me.role}` : ' 확인 중'}</strong>
-      </p>
-      <div style={{ marginTop: 12, display: 'grid', gap: 8 }}>
-        {me?.isServiceAdmin ? <p>서비스 관리자 기능: 전체 클럽 조회/운영 관리 가능</p> : null}
-        {hasClubAdminAccess ? (
-          <p>클럽 관리자 기능: 본인이 관리하는 클럽 경기만 생성/수정 가능</p>
-        ) : (
-          <p>클럽 관리자 기능: 현재 관리 가능한 클럽이 없습니다.</p>
-        )}
-      </div>
-      <div style={{ marginTop: 12, display: 'flex', gap: 10 }}>
-        <Link href="/admin/matches">경기 관리</Link>
-        <Link href="/admin/matches/new">경기 생성</Link>
-        <Link href="/admin/members">회원 관리</Link>
-      </div>
-      {message ? <p style={{ marginTop: 12 }}>{message}</p> : null}
-    </section>
+    <>
+      <section className="card">
+        <h1>관리</h1>
+        <p>
+          현재 권한: <strong>{me ? me.role : '확인 중'}</strong>
+        </p>
+        <div className="pc-stack">
+          {me?.isServiceAdmin ? <div className="quick-link">서비스 관리자: 전체 클럽 조회/운영 관리 가능</div> : null}
+          {hasClubAdminAccess ? (
+            <div className="quick-link">클럽 관리자: 본인 관리 클럽의 경기 생성/수정 가능</div>
+          ) : (
+            <div className="quick-link">관리 가능한 클럽이 없습니다.</div>
+          )}
+        </div>
+      </section>
+
+      <section className="card">
+        <h2>관리 작업</h2>
+        <div className="pc-admin-actions">
+          <Link href="/admin/matches" className="pc-pill is-active">
+            경기 관리
+          </Link>
+          <Link href="/admin/matches/new" className="pc-pill">
+            경기 생성
+          </Link>
+          <Link href="/admin/members" className="pc-pill">
+            멤버 관리
+          </Link>
+        </div>
+      </section>
+
+      {message ? <p style={{ color: 'var(--pc-muted)' }}>{message}</p> : null}
+    </>
   );
 }

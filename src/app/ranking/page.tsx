@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import RankRow from '@/components/ui/RankRow';
 
 type RankingRow = {
   rank: number;
@@ -37,7 +38,7 @@ export default function RankingPage() {
       }
       setRows(json.data);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : '요청 실패');
+      setMessage(error instanceof Error ? error.message : '요청에 실패했습니다.');
     } finally {
       setLoading(false);
     }
@@ -47,35 +48,62 @@ export default function RankingPage() {
     load().catch(() => setMessage('순위를 불러오지 못했습니다.'));
   }, [tab]);
 
+  const podium = useMemo(() => rows.slice(0, 3), [rows]);
+
   return (
-    <section className="card">
-      <h1>순위</h1>
-      <div style={{ marginTop: 10, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        {tabs.map((item) => (
-          <button
-            key={item.key}
-            onClick={() => setTab(item.key)}
-            style={{ fontWeight: tab === item.key ? 700 : 400 }}
-          >
-            {item.label}
-          </button>
-        ))}
-      </div>
+    <>
+      <section className="card">
+        <h1>순위</h1>
+        <p>시즌 누적 점수와 포지션별 랭킹을 확인하세요.</p>
+        <div className="pc-pill-row">
+          {tabs.map((item) => (
+            <button key={item.key} type="button" className={`pc-pill${tab === item.key ? ' is-active' : ''}`} onClick={() => setTab(item.key)}>
+              {item.label}
+            </button>
+          ))}
+        </div>
+      </section>
 
-      {loading ? <p style={{ marginTop: 10 }}>로딩 중...</p> : null}
-      {!loading && rows.length === 0 ? <p style={{ marginTop: 10 }}>{message || '데이터 없음'}</p> : null}
+      {podium.length > 0 ? (
+        <section className="pc-podium">
+          <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '.08em', color: 'var(--pc-accent)' }}>SEASON PODIUM</div>
+          <div className="pc-podium-stand">
+            {[podium[1], podium[0], podium[2]].map((row, index) => {
+              if (!row) return null;
+              const rank = row.rank;
+              const height = rank === 1 ? 84 : rank === 2 ? 62 : 48;
+              const bg =
+                rank === 1
+                  ? 'linear-gradient(180deg,#ffe066,#f0a020)'
+                  : rank === 2
+                    ? 'linear-gradient(180deg,#94a3b8,#475569)'
+                    : 'linear-gradient(180deg,#f59e0b,#7c2d12)';
+              return (
+                <div className="pc-podium-col" key={`${row.userId}-${index}`}>
+                  <div className="pc-podium-name">{row.displayName}</div>
+                  <div className="pc-podium-score">{row.score}</div>
+                  <div className="pc-podium-bar" style={{ height, background: bg }}>
+                    {rank}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      ) : null}
 
-      <ul className="check-list" style={{ marginTop: 10 }}>
-        {rows.map((row) => (
-          <li key={row.userId}>
-            <strong>
-              {row.rank}위 {row.displayName}
-            </strong>{' '}
-            / 점수 {row.score} / MVP {row.mvpCount}
-            {row.currentTitle ? <div>칭호: {row.currentTitle}</div> : null}
-          </li>
-        ))}
-      </ul>
-    </section>
+      <section className="card">
+        <h2>전체 랭킹</h2>
+        {loading ? <p style={{ marginTop: 10 }}>로딩 중...</p> : null}
+        {!loading && rows.length === 0 ? <p style={{ marginTop: 10 }}>{message || '데이터가 없습니다.'}</p> : null}
+        {!loading && rows.length > 0 ? (
+          <div className="pc-stack">
+            {rows.map((row) => (
+              <RankRow key={row.userId} rank={row.rank} name={row.displayName} score={row.score} badge={`MVP ${row.mvpCount}`} />
+            ))}
+          </div>
+        ) : null}
+      </section>
+    </>
   );
 }

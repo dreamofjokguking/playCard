@@ -105,4 +105,3 @@ async function _GET(request: NextRequest, context: { params: { id: string } }) {
 }
 
 export const GET = withApiLogging(_GET, '/api/users/[id]/dashboard');
-

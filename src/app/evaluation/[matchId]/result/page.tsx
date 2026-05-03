@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 type ResultRow = {
   rank: number;
@@ -32,20 +32,22 @@ export default function EvaluationResultPage({ params }: { params: { matchId: st
       const res = await fetch(`/api/matches/${params.matchId}/results`, { cache: 'no-store' });
       const json = (await res.json()) as { success: boolean; message?: string; data?: ResultPayload };
       if (!res.ok || !json.success || !json.data) {
-        setMessage(json.message || '결과를 불러오지 못했습니다.');
+        setMessage(json.message || '경기 결과를 불러오지 못했습니다.');
         return;
       }
       setData(json.data);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : '요청 실패');
+      setMessage(error instanceof Error ? error.message : '요청에 실패했습니다.');
     } finally {
       setLoading(false);
     }
   }
 
   useEffect(() => {
-    load().catch(() => setMessage('결과를 불러오지 못했습니다.'));
+    load().catch(() => setMessage('경기 결과를 불러오지 못했습니다.'));
   }, [params.matchId]);
+
+  const podium = useMemo(() => data?.playerStats.slice(0, 3) ?? [], [data]);
 
   if (loading) {
     return (
@@ -65,84 +67,50 @@ export default function EvaluationResultPage({ params }: { params: { matchId: st
     );
   }
 
-  const myRow = data.playerStats.find((row) => row.userId === data.viewerId) ?? null;
-  const topRow = data.playerStats[0] ?? null;
-  const middleRow = data.playerStats[Math.floor(data.playerStats.length / 2)] ?? null;
-  const top3 = data.playerStats.slice(0, 3);
-
   return (
-    <section className="card">
-      <h1>경기 결과</h1>
-      <p>
-        {String(data.match.date).slice(0, 10)} {data.match.time} {data.match.venue ? `/ ${data.match.venue}` : ''}
-      </p>
+    <>
+      <section className="card">
+        <h1>경기 결과</h1>
+        <p>
+          {String(data.match.date).slice(0, 10)} {data.match.time}
+          {data.match.venue ? ` / ${data.match.venue}` : ''}
+        </p>
+      </section>
 
-      <div style={{ marginTop: 12, display: 'grid', gap: 8 }}>
-        <h2>시상대</h2>
-        <div style={{ display: 'grid', gap: 8 }}>
-          {top3.map((row) => (
-            <div
-              key={row.userId}
-              style={{
-                border: row.rank === 1 ? '2px solid #f59e0b' : '1px solid #ddd',
-                borderRadius: 8,
-                padding: 10,
-                background: row.rank === 1 ? '#fff7ed' : '#fff'
-              }}
-            >
-              <strong>
-                {row.rank}위 {row.displayName}
-              </strong>{' '}
-              / 종합 {row.overall} {row.userId === data.mvpUserId ? '/ MVP' : ''}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {myRow ? (
-        <div style={{ marginTop: 12, border: '2px solid #2563eb', borderRadius: 8, padding: 10, background: '#eff6ff' }}>
-          <h2>내 점수 비교</h2>
-          <p>
-            내 순위: {myRow.rank}위 / 종합 {myRow.overall}
-          </p>
-          <p>
-            1위 대비: {topRow ? `${(myRow.overall - topRow.overall).toFixed(2)}점` : '-'} / 중간권 대비:{' '}
-            {middleRow ? `${(myRow.overall - middleRow.overall).toFixed(2)}점` : '-'}
-          </p>
-          <p>내 MVP 득표: {myRow.mvpCount}</p>
-        </div>
+      {podium.length === 3 ? (
+        <section className="pc-podium">
+          <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '.08em', color: 'var(--pc-accent)' }}>MVP PODIUM</div>
+          <div style={{ marginTop: 8, fontSize: 15, fontWeight: 800 }}>
+            1위 {podium[0].displayName} · {podium[0].overall}
+          </div>
+          <div style={{ marginTop: 4, color: 'var(--pc-muted)', fontSize: 12 }}>
+            2위 {podium[1].displayName} · 3위 {podium[2].displayName}
+          </div>
+        </section>
       ) : null}
 
-      <ul className="check-list" style={{ marginTop: 10 }}>
-        {data.playerStats.map((row) => {
-          const isMine = row.userId === data.viewerId;
-          const isMvp = row.userId === data.mvpUserId;
-          return (
-            <li
-              key={row.userId}
-              style={{
-                border: isMvp ? '2px solid #f59e0b' : isMine ? '2px solid #2563eb' : '1px solid #ddd',
-                borderRadius: 8,
-                padding: 10,
-                background: isMine ? '#eff6ff' : '#fff'
-              }}
-            >
-              <strong>
-                {row.rank}위 {row.displayName}
-              </strong>{' '}
-              / 종합 {row.overall}
-              {isMvp ? ' / MVP' : ''}
-              {isMine ? ' / 내 점수' : ''}
-              <div style={{ marginTop: 4 }}>
-                항목: {row.metricStats.map((metric) => `${metric.metricKey} ${metric.avg}`).join(', ') || '-'}
-              </div>
-              <div>결장: {row.absences.join(', ') || '-'}</div>
-              <div>한줄평: {row.comments.join(' | ') || '-'}</div>
-            </li>
-          );
-        })}
-      </ul>
-    </section>
+      <section className="card">
+        <h2>참여자 상세 결과</h2>
+        <ul className="pc-list-reset pc-stack">
+          {data.playerStats.map((row) => {
+            const isMine = row.userId === data.viewerId;
+            const isMvp = row.userId === data.mvpUserId;
+            return (
+              <li key={row.userId} className={`pc-result-item${isMine ? ' is-mine' : ''}${isMvp ? ' is-mvp' : ''}`}>
+                <strong>
+                  {row.rank}위 {row.displayName}
+                </strong>{' '}
+                / 종합 {row.overall}
+                {isMvp ? ' / MVP' : ''}
+                {isMine ? ' / 내 점수' : ''}
+                <div style={{ marginTop: 4 }}>항목: {row.metricStats.map((metric) => `${metric.metricKey} ${metric.avg}`).join(', ') || '-'}</div>
+                <div>결장: {row.absences.join(', ') || '-'}</div>
+                <div>코멘트: {row.comments.join(' | ') || '-'}</div>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+    </>
   );
 }
-
