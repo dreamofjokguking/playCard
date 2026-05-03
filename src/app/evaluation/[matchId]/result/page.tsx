@@ -65,12 +65,54 @@ export default function EvaluationResultPage({ params }: { params: { matchId: st
     );
   }
 
+  const myRow = data.playerStats.find((row) => row.userId === data.viewerId) ?? null;
+  const topRow = data.playerStats[0] ?? null;
+  const middleRow = data.playerStats[Math.floor(data.playerStats.length / 2)] ?? null;
+  const top3 = data.playerStats.slice(0, 3);
+
   return (
     <section className="card">
       <h1>경기 결과</h1>
       <p>
         {String(data.match.date).slice(0, 10)} {data.match.time} {data.match.venue ? `/ ${data.match.venue}` : ''}
       </p>
+
+      <div style={{ marginTop: 12, display: 'grid', gap: 8 }}>
+        <h2>시상대</h2>
+        <div style={{ display: 'grid', gap: 8 }}>
+          {top3.map((row) => (
+            <div
+              key={row.userId}
+              style={{
+                border: row.rank === 1 ? '2px solid #f59e0b' : '1px solid #ddd',
+                borderRadius: 8,
+                padding: 10,
+                background: row.rank === 1 ? '#fff7ed' : '#fff'
+              }}
+            >
+              <strong>
+                {row.rank}위 {row.displayName}
+              </strong>{' '}
+              / 종합 {row.overall} {row.userId === data.mvpUserId ? '/ MVP' : ''}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {myRow ? (
+        <div style={{ marginTop: 12, border: '2px solid #2563eb', borderRadius: 8, padding: 10, background: '#eff6ff' }}>
+          <h2>내 점수 비교</h2>
+          <p>
+            내 순위: {myRow.rank}위 / 종합 {myRow.overall}
+          </p>
+          <p>
+            1위 대비: {topRow ? `${(myRow.overall - topRow.overall).toFixed(2)}점` : '-'} / 중간권 대비:{' '}
+            {middleRow ? `${(myRow.overall - middleRow.overall).toFixed(2)}점` : '-'}
+          </p>
+          <p>내 MVP 득표: {myRow.mvpCount}</p>
+        </div>
+      ) : null}
+
       <ul className="check-list" style={{ marginTop: 10 }}>
         {data.playerStats.map((row) => {
           const isMine = row.userId === data.viewerId;

@@ -21,6 +21,8 @@
 | Evaluation Position Submit | `/api/evaluations/positions` | `evaluations/positions/route.ts` (POST) |
 | Evaluation Submit | `/api/evaluations` | `evaluations/route.ts` (POST) |
 | Match Results | `/api/matches/[id]/results` | `matches/[id]/results/route.ts` (GET) |
+| Rankings | `/api/rankings` | `rankings/route.ts` (GET) |
+| User Dashboard | `/api/users/[id]/dashboard` | `users/[id]/dashboard/route.ts` (GET) |
 | Notifications | `/api/notifications` | `notifications/route.ts` (GET) |
 | Notifications Read | `/api/notifications/read` | `notifications/read/route.ts` (PATCH) |
 
@@ -39,7 +41,7 @@
 
 - `src/app/api/club-rooms/` (클럽룸 생성/조회/수정)
 - `src/app/api/auth/` (NextAuth)
-- `src/app/api/matches/`, `src/app/api/evaluations/`, `src/app/api/rankings/`, `src/app/api/teams/`
+- `src/app/api/matches/`, `src/app/api/evaluations/`, `src/app/api/teams/`
 
 ## 공통 패턴
 
