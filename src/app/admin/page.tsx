@@ -47,6 +47,7 @@ export default function AdminPage() {
       <div style={{ marginTop: 12, display: 'flex', gap: 10 }}>
         <Link href="/admin/matches">경기 관리</Link>
         <Link href="/admin/matches/new">경기 생성</Link>
+        <Link href="/admin/members">회원 관리</Link>
       </div>
       {message ? <p style={{ marginTop: 12 }}>{message}</p> : null}
     </section>

@@ -14,6 +14,19 @@ const MatchSchema = new Schema(
       required: true
     },
     evaluationDeadline: { type: Date },
+    positionSubmissions: {
+      type: [
+        new Schema(
+          {
+            userId: { type: String, required: true, trim: true },
+            selectedMetrics: { type: [String], default: [] },
+            submittedAt: { type: Date, required: true, default: Date.now }
+          },
+          { _id: false }
+        )
+      ],
+      default: []
+    },
     evaluationsSubmitted: { type: [String], default: [] },
     mvpVotes: {
       type: [

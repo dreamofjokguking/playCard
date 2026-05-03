@@ -15,6 +15,14 @@
 | Club Room Detail | `/api/club-rooms/[id]` | `club-rooms/[id]/route.ts` (GET, PATCH, DELETE) |
 | Admin Matches | `/api/admin/matches` | `admin/matches/route.ts` (GET, POST) |
 | Admin Match Detail | `/api/admin/matches/[id]` | `admin/matches/[id]/route.ts` (PATCH) |
+| Admin Members | `/api/admin/members` | `admin/members/route.ts` (GET) |
+| Admin Member Detail | `/api/admin/members/[id]` | `admin/members/[id]/route.ts` (PATCH) |
+| Evaluation Current | `/api/evaluations/current` | `evaluations/current/route.ts` (GET) |
+| Evaluation Position Submit | `/api/evaluations/positions` | `evaluations/positions/route.ts` (POST) |
+| Evaluation Submit | `/api/evaluations` | `evaluations/route.ts` (POST) |
+| Match Results | `/api/matches/[id]/results` | `matches/[id]/results/route.ts` (GET) |
+| Notifications | `/api/notifications` | `notifications/route.ts` (GET) |
+| Notifications Read | `/api/notifications/read` | `notifications/read/route.ts` (PATCH) |
 
 ## 도메인별 MAP
 
