@@ -41,19 +41,13 @@ export default function LoginPage() {
       setSessionUserId(null);
       return;
     }
-    if (json.success && json.data) {
-      setSessionUserId(json.data.userId);
-    }
+    if (json.success && json.data) setSessionUserId(json.data.userId);
   }
 
   async function refreshMe() {
     const res = await fetch('/api/auth/me', { cache: 'no-store' });
     const json = await readJsonSafe<MeResponse>(res);
-    if (!json) {
-      setMe(null);
-      return;
-    }
-    if (!res.ok || !json.success || !json.data) {
+    if (!json || !res.ok || !json.success || !json.data) {
       setMe(null);
       return;
     }
@@ -73,7 +67,7 @@ export default function LoginPage() {
       return;
     }
     if (!res.ok || !json.success) {
-      setMessage(json.message || '세션 로그인 실패');
+      setMessage(json.message || '세션 로그인에 실패했습니다.');
       return;
     }
     setMessage(`세션 로그인 완료: ${json.data?.userId}`);
@@ -90,7 +84,7 @@ export default function LoginPage() {
       return;
     }
     if (!res.ok || !json.success) {
-      setMessage(json.message || '세션 로그아웃 실패');
+      setMessage(json.message || '세션 로그아웃에 실패했습니다.');
       return;
     }
     setMessage('세션 로그아웃 완료');
@@ -99,37 +93,58 @@ export default function LoginPage() {
   }
 
   useEffect(() => {
-    refreshSession().catch(() => setMessage('세션 조회 실패'));
+    refreshSession().catch(() => setMessage('세션 조회에 실패했습니다.'));
     refreshMe().catch(() => setMe(null));
   }, []);
 
   return (
-    <section className="card">
-      <h1>로그인 (로컬 테스트)</h1>
-      <p>테스트용 userId로 세션을 설정해 평가/관리 페이지를 바로 검증할 수 있습니다.</p>
+    <>
+      <section className="card">
+        <h1>로그인</h1>
+        <p>테스트용 세션 로그인으로 평가/관리 화면을 바로 검증할 수 있습니다.</p>
+      </section>
 
-      <div style={{ marginTop: 12, display: 'grid', gap: 8, maxWidth: 420 }}>
-        <input value={userId} onChange={(event) => setUserId(event.target.value)} placeholder="userId 입력" />
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <button onClick={() => signInSession()}>로그인(세션 설정)</button>
-          <button onClick={() => signOutSession()}>로그아웃</button>
-          <button onClick={() => router.push('/evaluation')}>평가 페이지 이동</button>
+      <section className="card">
+        <h2>세션 설정</h2>
+        <div className="pc-form-grid">
+          <input className="pc-field" value={userId} onChange={(event) => setUserId(event.target.value)} placeholder="userId 입력" />
+          <div className="pc-row">
+            <button className="pc-button pc-button-primary" type="button" onClick={() => signInSession()}>
+              로그인
+            </button>
+            <button className="pc-button" type="button" onClick={() => signOutSession()}>
+              로그아웃
+            </button>
+            <button className="pc-button" type="button" onClick={() => router.push('/evaluation')}>
+              평가 페이지
+            </button>
+          </div>
+          <div className="quick-link">
+            <div>현재 세션: {sessionUserId || '(없음)'}</div>
+            <div className="pc-meta">권한: {me ? `${me.role} / actorId: ${me.actorId}` : '미로그인'}</div>
+          </div>
         </div>
-      </div>
+      </section>
 
-      <div style={{ marginTop: 12, display: 'grid', gap: 4 }}>
-        <p>현재 세션: {sessionUserId || '(없음)'}</p>
-        <p>현재 권한: {me ? `${me.role} / actorId: ${me.actorId}` : '(미확인 또는 미로그인)'}</p>
-      </div>
+      <section className="card">
+        <h2>바로 이동</h2>
+        <div className="pc-admin-actions">
+          <Link href="/evaluation" className="pc-pill is-active">
+            평가
+          </Link>
+          <Link href="/admin/members" className="pc-pill">
+            멤버 관리
+          </Link>
+          <Link href="/admin/matches" className="pc-pill">
+            경기 관리
+          </Link>
+          <Link href="/club-rooms" className="pc-pill">
+            클럽룸 테스트
+          </Link>
+        </div>
+      </section>
 
-      <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        <Link href="/evaluation">평가</Link>
-        <Link href="/admin/members">회원 관리</Link>
-        <Link href="/admin/matches">경기 관리</Link>
-        <Link href="/club-rooms">클럽룸 테스트</Link>
-      </div>
-
-      {message ? <p style={{ marginTop: 10 }}>{message}</p> : null}
-    </section>
+      {message ? <p style={{ color: 'var(--pc-muted)' }}>{message}</p> : null}
+    </>
   );
 }

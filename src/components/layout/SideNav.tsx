@@ -12,13 +12,16 @@ export default function SideNav() {
       <nav className="pc-sidenav-nav">
         {navigationItems.map((item) => {
           const active = pathname === item.href;
+          const Icon = item.icon;
           return (
             <Link
               key={item.href}
               href={item.href}
               className={`pc-sidenav-link${active ? ' is-active' : ''}`}
             >
-              <span className="pc-nav-glyph">{item.iconText}</span>
+              <span className="pc-nav-icon">
+                <Icon size={18} />
+              </span>
               <span>{item.label}</span>
             </Link>
           );

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { io, Socket } from 'socket.io-client';
 
@@ -19,6 +19,7 @@ export default function NotificationsPage() {
   const [rows, setRows] = useState<NotificationRow[]>([]);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<'all' | 'unread'>('all');
 
   async function load() {
     setLoading(true);
@@ -27,12 +28,12 @@ export default function NotificationsPage() {
       const res = await fetch('/api/notifications', { cache: 'no-store' });
       const json = (await res.json()) as { success: boolean; data?: NotificationRow[]; message?: string };
       if (!res.ok || !json.success || !json.data) {
-        setMessage(json.message || '알림 조회 실패');
+        setMessage(json.message || '알림 조회에 실패했습니다.');
         return;
       }
       setRows(json.data);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : '요청 실패');
+      setMessage(error instanceof Error ? error.message : '요청에 실패했습니다.');
     } finally {
       setLoading(false);
     }
@@ -46,7 +47,7 @@ export default function NotificationsPage() {
     });
     const json = (await res.json()) as { success: boolean; message?: string };
     if (!res.ok || !json.success) {
-      setMessage(json.message || '읽음 처리 실패');
+      setMessage(json.message || '읽음 처리에 실패했습니다.');
       return;
     }
     await load();
@@ -61,21 +62,14 @@ export default function NotificationsPage() {
       });
     }
     await load();
-    if (row.path) {
-      router.push(row.path);
-    }
+    if (row.path) router.push(row.path);
   }
 
   useEffect(() => {
-    load().catch(() => setMessage('알림 조회 실패'));
+    load().catch(() => setMessage('알림 조회에 실패했습니다.'));
   }, []);
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      load().catch(() => undefined);
-    }, 5000);
-    return () => clearInterval(timer);
-  }, []);
+  const filtered = useMemo(() => (filter === 'all' ? rows : rows.filter((row) => !row.read)), [rows, filter]);
 
   useEffect(() => {
     let socket: Socket | null = null;
@@ -107,21 +101,36 @@ export default function NotificationsPage() {
   return (
     <section className="card">
       <h1>알림함</h1>
-      <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
-        <button onClick={() => load()} disabled={loading}>
-          {loading ? '새로고침 중...' : '새로고침'}
+      <div className="pc-pill-row">
+        <button type="button" className={`pc-pill${filter === 'all' ? ' is-active' : ''}`} onClick={() => setFilter('all')}>
+          전체
         </button>
-        <button onClick={() => markAllRead()}>전체 읽음</button>
+        <button type="button" className={`pc-pill${filter === 'unread' ? ' is-active' : ''}`} onClick={() => setFilter('unread')}>
+          미확인
+        </button>
       </div>
-      <ul className="check-list" style={{ marginTop: 10 }}>
-        {rows.map((row) => (
-          <li key={row._id} style={{ cursor: 'pointer' }} onClick={() => openNotification(row)}>
-            <strong>{row.read ? '읽음' : '새 알림'}</strong> / {row.title}
-            <div>{row.message}</div>
-            <div style={{ fontSize: 12, opacity: 0.8 }}>{new Date(row.sentAt).toLocaleString('ko-KR')}</div>
-          </li>
-        ))}
-      </ul>
+      <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+        <button className="pc-button" onClick={() => load()} disabled={loading}>
+          {loading ? '불러오는 중...' : '새로고침'}
+        </button>
+        <button className="pc-button pc-button-primary" onClick={() => markAllRead()}>
+          전체 읽음
+        </button>
+      </div>
+
+      {filtered.length > 0 ? (
+        <ul className="pc-list-reset pc-stack">
+          {filtered.map((row) => (
+            <li key={row._id} className={`pc-notification-item${row.read ? '' : ' is-unread'}`} onClick={() => openNotification(row)}>
+              <strong>{row.read ? '읽음' : '새 알림'}</strong> / {row.title}
+              <div style={{ marginTop: 4 }}>{row.message}</div>
+              <div className="pc-meta">{new Date(row.sentAt).toLocaleString('ko-KR')}</div>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p style={{ marginTop: 12 }}>표시할 알림이 없습니다.</p>
+      )}
       {message ? <p style={{ marginTop: 10 }}>{message}</p> : null}
     </section>
   );

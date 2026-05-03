@@ -1,71 +1,85 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { balancePosition, balanceTotal, randomBalance, topVsBottom, type PlayerScore } from '@/utils/teamBalancer';
+import { useEffect, useMemo, useState } from 'react';
 
-const samplePlayers: PlayerScore[] = [
-  { userId: 'u1', total: 8.6, metrics: { attack: 9.2, defense: 7.5 } },
-  { userId: 'u2', total: 8.1, metrics: { attack: 8.7, defense: 7.3 } },
-  { userId: 'u3', total: 7.8, metrics: { attack: 7.4, defense: 8.1 } },
-  { userId: 'u4', total: 7.5, metrics: { attack: 7.2, defense: 7.8 } },
-  { userId: 'u5', total: 7.1, metrics: { attack: 6.8, defense: 7.4 } },
-  { userId: 'u6', total: 6.9, metrics: { attack: 6.2, defense: 7.6 } }
-];
+type CurrentEvaluationResponse = {
+  participants: Array<{ _id: string; displayName: string }>;
+};
 
 export default function TeamBuilderPage() {
-  const [mode, setMode] = useState<'balance' | 'position' | 'top-bottom' | 'random'>('balance');
+  const [rows, setRows] = useState<Array<{ _id: string; displayName: string }>>([]);
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState('');
+  const [mode, setMode] = useState<'auto' | 'manual'>('auto');
 
-  const result = useMemo(() => {
-    if (mode === 'position') return balancePosition(samplePlayers, 'attack');
-    if (mode === 'top-bottom') return topVsBottom(samplePlayers);
-    if (mode === 'random') return randomBalance(samplePlayers);
-    return balanceTotal(samplePlayers);
-  }, [mode]);
+  async function load() {
+    setLoading(true);
+    setMessage('');
+    try {
+      const res = await fetch('/api/evaluations/current', { cache: 'no-store' });
+      const json = (await res.json()) as { success: boolean; data?: CurrentEvaluationResponse | null; message?: string };
+      if (!res.ok || !json.success) {
+        setMessage(json.message || '팀 구성 데이터를 불러오지 못했습니다.');
+        return;
+      }
+      setRows(json.data?.participants ?? []);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : '요청에 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    load().catch(() => setMessage('팀 구성 데이터를 불러오지 못했습니다.'));
+  }, []);
+
+  const teams = useMemo(() => {
+    const red: string[] = [];
+    const blue: string[] = [];
+    rows.forEach((row, index) => {
+      if (index % 2 === 0) red.push(row.displayName);
+      else blue.push(row.displayName);
+    });
+    return { red, blue };
+  }, [rows]);
 
   return (
-    <section className="card">
-      <h1>팀구성</h1>
-      <div style={{ marginTop: 10, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        <button onClick={() => setMode('balance')} style={{ fontWeight: mode === 'balance' ? 700 : 400 }}>
-          밸런스
-        </button>
-        <button onClick={() => setMode('position')} style={{ fontWeight: mode === 'position' ? 700 : 400 }}>
-          포지션
-        </button>
-        <button onClick={() => setMode('top-bottom')} style={{ fontWeight: mode === 'top-bottom' ? 700 : 400 }}>
-          상/하위
-        </button>
-        <button onClick={() => setMode('random')} style={{ fontWeight: mode === 'random' ? 700 : 400 }}>
-          랜덤
-        </button>
-      </div>
-
-      <p style={{ marginTop: 10 }}>
-        점수 합: A {result.teamATotal.toFixed(1)} / B {result.teamBTotal.toFixed(1)} / 격차 {result.gap.toFixed(1)}
-      </p>
-
-      <div style={{ marginTop: 10, display: 'grid', gap: 12 }}>
-        <div>
-          <h2>청팀</h2>
-          <ul className="check-list">
-            {result.teamA.map((player) => (
-              <li key={player.userId}>
-                {player.userId} / {player.total}
-              </li>
-            ))}
-          </ul>
+    <>
+      <section className="card">
+        <h1>팀 구성</h1>
+        <p>평가 참여자 기준으로 양 팀 밸런스 미리보기를 제공합니다.</p>
+        <div className="pc-pill-row">
+          <button type="button" className={`pc-pill${mode === 'auto' ? ' is-active' : ''}`} onClick={() => setMode('auto')}>
+            밸런스 자동
+          </button>
+          <button type="button" className={`pc-pill${mode === 'manual' ? ' is-active' : ''}`} onClick={() => setMode('manual')}>
+            수동 편성
+          </button>
         </div>
-        <div>
-          <h2>홍팀</h2>
-          <ul className="check-list">
-            {result.teamB.map((player) => (
-              <li key={player.userId}>
-                {player.userId} / {player.total}
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-    </section>
+      </section>
+
+      <section className="card">
+        <h2>팀 대결</h2>
+        {loading ? <p style={{ marginTop: 10 }}>로딩 중...</p> : null}
+        {!loading && message ? <p style={{ marginTop: 10 }}>{message}</p> : null}
+        {!loading && !message ? (
+          <div className="pc-team-grid">
+            <div className="pc-team-card red">
+              <strong>레드팀</strong>
+              <div className="pc-meta" style={{ marginTop: 6 }}>
+                {teams.red.join(', ') || '-'}
+              </div>
+            </div>
+            <div className="pc-team-card blue">
+              <strong>블루팀</strong>
+              <div className="pc-meta" style={{ marginTop: 6 }}>
+                {teams.blue.join(', ') || '-'}
+              </div>
+            </div>
+          </div>
+        ) : null}
+      </section>
+    </>
   );
 }

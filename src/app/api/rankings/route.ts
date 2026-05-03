@@ -98,4 +98,3 @@ async function _GET(request: NextRequest) {
 }
 
 export const GET = withApiLogging(_GET, '/api/rankings');
-

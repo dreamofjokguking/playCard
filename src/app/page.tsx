@@ -1,28 +1,28 @@
 import Link from 'next/link';
 
-const checks = [
-  'Next.js 실행',
-  'TypeScript 경로 별칭(@/)',
-  'MongoDB 연결 모듈',
-  'API 상태 확인(/api/health)',
-  '기본 API 응답(/api/ping)'
-];
-
 const quickLinks = [
-  { href: '/club-rooms', label: '클럽룸 테스트' },
-  { href: '/dashboard', label: '대시보드' },
-  { href: '/evaluation', label: '평가' },
-  { href: '/ranking', label: '순위' },
-  { href: '/team-builder', label: '팀구성' },
-  { href: '/admin', label: '관리' }
+  { href: '/dashboard', label: '내 카드 보기' },
+  { href: '/evaluation', label: '경기 평가하기' },
+  { href: '/ranking', label: '전체 순위 확인' },
+  { href: '/team-builder', label: '팀 자동 구성' }
 ];
 
 export default function HomePage() {
   return (
     <>
-      <section className="card">
-        <h1>PlayCard</h1>
-        <p>계획서 기반 통합 구축을 위한 공통 골격과 테스트 진입점을 준비했습니다.</p>
+      <section className="pc-hero">
+        <div className="pc-hero-caption">오늘의 플레이어</div>
+        <h1 className="pc-hero-title">테스터1님, 경기 준비 완료</h1>
+      </section>
+
+      <section className="pc-banner-card">
+        <div>
+          <div className="pc-banner-meta">평가 진행중 · 마감 23:59</div>
+          <div className="pc-banner-title">참여 5/7명 · 지금 평가 시작하기</div>
+        </div>
+        <Link href="/evaluation" className="pc-button pc-button-primary">
+          이동
+        </Link>
       </section>
 
       <section className="card">
@@ -34,15 +34,6 @@ export default function HomePage() {
             </Link>
           ))}
         </div>
-      </section>
-
-      <section className="card">
-        <h2>현재 체크 상태</h2>
-        <ul className="check-list">
-          {checks.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
       </section>
     </>
   );
