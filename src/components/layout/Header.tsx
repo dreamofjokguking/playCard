@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { io, Socket } from 'socket.io-client';
 import { navigationItems } from '@/components/layout/navigationItems';
 
 export default function Header() {
@@ -34,6 +35,33 @@ export default function Header() {
       fetchUnreadCount().catch(() => undefined);
     }, 10000);
     return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    let socket: Socket | null = null;
+    let mounted = true;
+
+    async function connectSocket() {
+      const res = await fetch('/api/auth/me', { cache: 'no-store' });
+      const json = (await res.json()) as { success: boolean; data?: { actorId: string } };
+      if (!mounted || !res.ok || !json.success || !json.data?.actorId) return;
+
+      socket = io('/', {
+        path: '/api/socket/io',
+        addTrailingSlash: false,
+        transports: ['websocket']
+      });
+      socket.emit('join-user-room', { userId: json.data.actorId });
+      socket.on('notification-created', () => {
+        fetchUnreadCount().catch(() => undefined);
+      });
+    }
+
+    connectSocket().catch(() => undefined);
+    return () => {
+      mounted = false;
+      if (socket) socket.disconnect();
+    };
   }, []);
 
   return (

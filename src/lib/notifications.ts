@@ -1,4 +1,5 @@
 import Notification from '@/lib/models/Notification';
+import { emitNotificationToUser } from '@/lib/socketRuntime';
 
 type BroadcastInput = {
   userIds: string[];
@@ -27,4 +28,15 @@ export async function broadcastNotification(input: BroadcastInput) {
       sentAt: new Date()
     }))
   );
+
+  for (const userId of uniqueUserIds) {
+    emitNotificationToUser(userId, {
+      type: input.type,
+      title: input.title,
+      message: input.message,
+      path: input.path,
+      matchId: input.matchId,
+      clubRoomId: input.clubRoomId
+    });
+  }
 }

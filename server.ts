@@ -5,6 +5,7 @@ import { createServer } from 'http';
 import { parse } from 'url';
 import next from 'next';
 import { Server } from 'socket.io';
+import { setNotificationEmitter } from './src/lib/socketRuntime';
 
 const dev = process.env.NODE_ENV !== 'production';
 const hostname = 'localhost';
@@ -26,6 +27,10 @@ app.prepare().then(() => {
       origin: '*',
       methods: ['GET', 'POST'],
     },
+  });
+
+  setNotificationEmitter((userId, payload) => {
+    io.to(`user-${userId}`).emit('notification-created', payload);
   });
 
   // ==========================================

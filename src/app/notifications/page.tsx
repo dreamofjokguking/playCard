@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { io, Socket } from 'socket.io-client';
 
 type NotificationRow = {
   _id: string;
@@ -74,6 +75,33 @@ export default function NotificationsPage() {
       load().catch(() => undefined);
     }, 5000);
     return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    let socket: Socket | null = null;
+    let mounted = true;
+
+    async function connectSocket() {
+      const res = await fetch('/api/auth/me', { cache: 'no-store' });
+      const json = (await res.json()) as { success: boolean; data?: { actorId: string } };
+      if (!mounted || !res.ok || !json.success || !json.data?.actorId) return;
+
+      socket = io('/', {
+        path: '/api/socket/io',
+        addTrailingSlash: false,
+        transports: ['websocket']
+      });
+      socket.emit('join-user-room', { userId: json.data.actorId });
+      socket.on('notification-created', () => {
+        load().catch(() => undefined);
+      });
+    }
+
+    connectSocket().catch(() => undefined);
+    return () => {
+      mounted = false;
+      if (socket) socket.disconnect();
+    };
   }, []);
 
   return (
