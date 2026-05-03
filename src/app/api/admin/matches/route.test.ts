@@ -10,6 +10,9 @@ vi.mock('@/lib/apiLogger', () => ({
 vi.mock('@/lib/db', () => ({
   dbConnect: vi.fn().mockResolvedValue(undefined)
 }));
+vi.mock('@/lib/notifications', () => ({
+  broadcastNotification: vi.fn().mockResolvedValue(undefined)
+}));
 
 const getActorAccess = vi.fn();
 const canManageClubRoomById = vi.fn();

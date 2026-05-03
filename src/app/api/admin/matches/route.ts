@@ -3,6 +3,7 @@ import { withApiLogging } from '@/lib/apiLogger';
 import { dbConnect } from '@/lib/db';
 import { canManageClubRoomById, getActorAccess } from '@/lib/accessControl';
 import Match from '@/lib/models/Match';
+import { broadcastNotification } from '@/lib/notifications';
 
 export const dynamic = 'force-dynamic';
 
@@ -107,6 +108,16 @@ async function _POST(request: NextRequest) {
     status: 'evaluating',
     evaluationDeadline,
     createdBy: access.actorId
+  });
+
+  await broadcastNotification({
+    userIds: participants,
+    type: 'evaluation.position.requested',
+    title: '포지션 선택 요청',
+    message: '경기 포지션 선택을 제출해주세요.',
+    path: '/evaluation',
+    clubRoomId,
+    matchId: String(created._id)
   });
 
   return NextResponse.json({ success: true, data: created }, { status: 201 });
