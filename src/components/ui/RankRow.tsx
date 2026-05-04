@@ -31,6 +31,12 @@ const RARITY_COLOR: Record<Rarity, string> = {
   legendary: '#FFE066'
 };
 
+const RANK_NUMBER_COLOR: Record<number, string> = {
+  1: 'var(--pc-podium-gold)',
+  2: 'var(--pc-podium-silver)',
+  3: 'var(--pc-podium-bronze)'
+};
+
 export default function RankRow({
   rank,
   name,
@@ -41,9 +47,11 @@ export default function RankRow({
   rarity = 'common'
 }: RankRowProps) {
   const isTop = rank === 1;
+  const isPodium = rank <= 3;
   const delta = rankDelta(rank, previousRank);
   const deltaText = delta.direction === 'flat' ? directionGlyph.flat : `${directionGlyph[delta.direction]} ${delta.amount}`;
   const titleColor = RARITY_COLOR[rarity];
+  const rankColor = RANK_NUMBER_COLOR[rank] ?? 'var(--pc-ink-tertiary)';
 
   return (
     <div
@@ -51,7 +59,7 @@ export default function RankRow({
         border: `1px solid ${isTop ? 'var(--pc-accent)' : 'var(--pc-line)'}`,
         borderRadius: 12,
         padding: 12,
-        background: isTop ? 'rgba(255, 224, 102, 0.12)' : '#262b40',
+        background: isTop ? 'var(--pc-accent-tint)' : 'var(--pc-surface-elevated)',
         display: 'flex',
         flexDirection: 'column',
         gap: 6
@@ -59,7 +67,19 @@ export default function RankRow({
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-          <strong style={{ minWidth: 28 }}>{rank}위</strong>
+          <strong
+            style={{
+              minWidth: 36,
+              color: rankColor,
+              fontFamily: 'var(--pc-font-display)',
+              fontStyle: isPodium ? 'italic' : 'normal',
+              fontWeight: 900,
+              fontSize: isPodium ? 22 : 16,
+              fontFeatureSettings: '"tnum"'
+            }}
+          >
+            {rank}
+          </strong>
           <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
           <span
             aria-label={`순위 변동 ${delta.direction === 'up' ? '상승' : delta.direction === 'down' ? '하락' : '유지'}`}

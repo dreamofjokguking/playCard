@@ -1,20 +1,303 @@
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
+
+  /* ────── SURFACE / NEUTRAL ────── */
   --pc-bg: #0e1018;
+  --pc-bg-deep: #161a26;
   --pc-surface: #1c2030;
+  --pc-surface-elevated: #262b40;
+
+  /* ────── BORDERS ────── */
   --pc-line: #2f3550;
+  --pc-border: #2f3550; /* 시안 alias */
+  --pc-border-strong: #3d456a;
+  --pc-border-glow: rgba(255, 176, 32, 0.35);
+  --pc-divider: #2f3550;
+
+  /* ────── INK (TEXT) ────── */
   --pc-text: #fff8ec;
+  --pc-ink: #fff8ec; /* 시안 alias */
   --pc-muted: #c9bba0;
+  --pc-ink-secondary: #c9bba0; /* 시안 alias */
+  --pc-ink-tertiary: #8a7e66;
+  --pc-ink-disabled: #5a5240;
+  --pc-ink-on-primary: #1a1206;
+  --pc-ink-on-accent: #2a1f00;
+
+  /* ────── BRAND ────── */
   --pc-primary: #ffb020;
+  --pc-primary-hover: #ffc04d;
+  --pc-primary-press: #e89a0a;
   --pc-primary-soft: rgba(255, 176, 32, 0.14);
+  --pc-primary-tint: rgba(255, 176, 32, 0.14); /* 시안 alias */
   --pc-primary-strong: #ffc04d;
+
   --pc-secondary: #ff5a36;
+  --pc-secondary-hover: #ff7553;
+  --pc-secondary-press: #e0431f;
+  --pc-secondary-tint: rgba(255, 90, 54, 0.14);
+
   --pc-accent: #ffe066;
+  --pc-accent-deep: #f0c040;
+  --pc-accent-tint: rgba(255, 224, 102, 0.16);
+
+  /* ────── SEMANTIC ────── */
+  --pc-success: #4ade80;
+  --pc-success-tint: rgba(74, 222, 128, 0.14);
+  --pc-warning: #ffb020;
+  --pc-warning-tint: rgba(255, 176, 32, 0.14);
+  --pc-danger: #f87171;
+  --pc-danger-tint: rgba(248, 113, 113, 0.14);
+  --pc-info: #60a5fa;
+  --pc-info-tint: rgba(96, 165, 250, 0.14);
+
+  /* ────── RARITY ────── */
+  --pc-rarity-common: #94a3b8;
+  --pc-rarity-rare: #60a5fa;
+  --pc-rarity-epic: #c084fc;
+  --pc-rarity-legendary: #ffe066;
+  --pc-rarity-common-bg: rgba(148, 163, 184, 0.14);
+  --pc-rarity-rare-bg: rgba(96, 165, 250, 0.14);
+  --pc-rarity-epic-bg: rgba(192, 132, 252, 0.14);
+  --pc-rarity-legendary-bg: rgba(255, 224, 102, 0.14);
+
+  /* ────── TEAM ────── */
+  --pc-team-blue: #60a5fa;
+  --pc-team-blue-tint: rgba(96, 165, 250, 0.14);
+  --pc-team-red: #f87171;
+  --pc-team-red-tint: rgba(248, 113, 113, 0.14);
+
+  /* ────── TREND (한국식) ────── */
+  --pc-trend-up: #f87171;
+  --pc-trend-down: #60a5fa;
+  --pc-trend-flat: #8a7e66;
+
+  /* ────── PODIUM ────── */
+  --pc-podium-gold: #f0c040;
+  --pc-podium-silver: #a8a29e;
+  --pc-podium-bronze: #b45309;
+
+  /* ────── TYPOGRAPHY ────── */
+  --pc-font-sans: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', sans-serif;
+  --pc-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
+  --pc-font-display: 'Pretendard Variable', Pretendard, sans-serif;
+
+  --pc-fs-xs: 11px;
+  --pc-fs-sm: 13px;
+  --pc-fs-base: 15px;
+  --pc-fs-md: 17px;
+  --pc-fs-lg: 20px;
+  --pc-fs-xl: 24px;
+  --pc-fs-2xl: 32px;
+  --pc-fs-3xl: 40px;
+  --pc-fs-4xl: 56px;
+
+  --pc-fw-regular: 400;
+  --pc-fw-medium: 500;
+  --pc-fw-semibold: 600;
+  --pc-fw-bold: 700;
+  --pc-fw-extrabold: 800;
+  --pc-fw-black: 900;
+
+  --pc-lh-tight: 1.15;
+  --pc-lh-snug: 1.3;
+  --pc-lh-normal: 1.5;
+  --pc-lh-relaxed: 1.65;
+
+  --pc-ls-tight: -0.02em;
+  --pc-ls-normal: -0.01em;
+  --pc-ls-wide: 0.04em;
+
+  /* ────── SPACING ────── */
+  --pc-space-1: 2px;
+  --pc-space-2: 4px;
+  --pc-space-3: 8px;
+  --pc-space-4: 12px;
+  --pc-space-5: 16px;
+  --pc-space-6: 24px;
+  --pc-space-7: 32px;
+  --pc-space-8: 48px;
+  --pc-space-9: 64px;
+  --pc-space-10: 96px;
+
+  /* ────── RADII ────── */
+  --pc-r-sm: 6px;
+  --pc-r-md: 10px;
+  --pc-r-lg: 16px;
+  --pc-r-xl: 22px;
+  --pc-r-full: 9999px;
+
+  /* ────── SHADOWS / GLOW ────── */
   --pc-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
   --pc-shadow-md: 0 4px 14px -2px rgba(0, 0, 0, 0.45), 0 1px 2px rgba(0, 0, 0, 0.25);
   --pc-shadow-lg: 0 12px 32px -8px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.3);
+  --pc-shadow-xl: 0 24px 48px -12px rgba(0, 0, 0, 0.65);
+  --pc-shadow-glow-amber: 0 0 24px rgba(255, 176, 32, 0.45), 0 4px 12px rgba(255, 176, 32, 0.25);
+  --pc-shadow-glow-orange: 0 0 22px rgba(255, 90, 54, 0.4);
+  --pc-shadow-glow-gold: 0 0 26px rgba(255, 224, 102, 0.5);
+  --pc-shadow-inset: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+
+  /* ────── EASING / DURATION ────── */
+  --pc-ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --pc-ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --pc-ease-decelerate: cubic-bezier(0, 0, 0.2, 1);
+  --pc-ease-accelerate: cubic-bezier(0.4, 0, 1, 1);
+  --pc-d-micro: 120ms;
+  --pc-d-base: 200ms;
+  --pc-d-slow: 320ms;
+  --pc-d-celebration: 800ms;
+
+  /* ────── Z-INDEX ────── */
+  --pc-z-nav: 100;
+  --pc-z-overlay: 200;
+  --pc-z-modal: 300;
+  --pc-z-toast: 400;
+}
+
+/* ============================================================
+   SEMANTIC TYPOGRAPHY UTILITIES
+   사용처 점진 마이그레이션. 인라인 font-size 대신 권장.
+   ============================================================ */
+
+.pc-display {
+  font-family: var(--pc-font-display);
+  font-size: var(--pc-fs-4xl);
+  font-weight: var(--pc-fw-black);
+  line-height: var(--pc-lh-tight);
+  letter-spacing: var(--pc-ls-tight);
+  font-style: italic;
+  color: var(--pc-ink);
+}
+
+.pc-h1 {
+  font-family: var(--pc-font-sans);
+  font-size: var(--pc-fs-2xl);
+  font-weight: var(--pc-fw-extrabold);
+  line-height: var(--pc-lh-tight);
+  letter-spacing: var(--pc-ls-tight);
+  color: var(--pc-ink);
+}
+
+.pc-h2 {
+  font-family: var(--pc-font-sans);
+  font-size: var(--pc-fs-xl);
+  font-weight: var(--pc-fw-bold);
+  line-height: var(--pc-lh-snug);
+  letter-spacing: var(--pc-ls-tight);
+  color: var(--pc-ink);
+}
+
+.pc-h3 {
+  font-family: var(--pc-font-sans);
+  font-size: var(--pc-fs-lg);
+  font-weight: var(--pc-fw-bold);
+  line-height: var(--pc-lh-snug);
+  color: var(--pc-ink);
+}
+
+.pc-body {
+  font-family: var(--pc-font-sans);
+  font-size: var(--pc-fs-base);
+  font-weight: var(--pc-fw-regular);
+  line-height: var(--pc-lh-normal);
+  color: var(--pc-ink);
+}
+
+.pc-body-sm {
+  font-family: var(--pc-font-sans);
+  font-size: var(--pc-fs-sm);
+  font-weight: var(--pc-fw-regular);
+  line-height: var(--pc-lh-normal);
+  color: var(--pc-ink-secondary);
+}
+
+.pc-caption {
+  font-family: var(--pc-font-sans);
+  font-size: var(--pc-fs-xs);
+  font-weight: var(--pc-fw-semibold);
+  line-height: var(--pc-lh-snug);
+  color: var(--pc-ink-tertiary);
+  letter-spacing: var(--pc-ls-wide);
+  text-transform: uppercase;
+}
+
+.pc-mono {
+  font-family: var(--pc-font-mono);
+  font-feature-settings: 'tnum';
+}
+
+.pc-score {
+  font-family: var(--pc-font-display);
+  font-weight: var(--pc-fw-black);
+  font-feature-settings: 'tnum';
+  letter-spacing: -0.04em;
+  font-style: italic;
+  color: var(--pc-primary);
+  text-shadow: 0 0 14px rgba(255, 176, 32, 0.45);
+}
+
+.pc-stat-num {
+  font-family: var(--pc-font-display);
+  font-weight: var(--pc-fw-extrabold);
+  font-feature-settings: 'tnum';
+  letter-spacing: var(--pc-ls-tight);
+}
+
+.pc-glow-amber {
+  text-shadow: 0 0 14px rgba(255, 176, 32, 0.55);
+}
+
+.pc-glow-gold {
+  text-shadow: 0 0 14px rgba(255, 224, 102, 0.55);
+}
+
+/* ============================================================
+   RARITY CHIP UTILITIES
+   사용처: 결과 화면, 도감, 순위, player-card 등 — 다음 PR부터 점진 적용
+   ============================================================ */
+
+.pc-rarity-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: var(--pc-r-full);
+  font-size: var(--pc-fs-xs);
+  font-weight: var(--pc-fw-extrabold);
+  letter-spacing: var(--pc-ls-wide);
+  border: 1px solid transparent;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pc-rarity-common {
+  color: var(--pc-rarity-common);
+  background: var(--pc-rarity-common-bg);
+  border-color: var(--pc-rarity-common);
+}
+
+.pc-rarity-rare {
+  color: var(--pc-rarity-rare);
+  background: var(--pc-rarity-rare-bg);
+  border-color: var(--pc-rarity-rare);
+}
+
+.pc-rarity-epic {
+  color: var(--pc-rarity-epic);
+  background: var(--pc-rarity-epic-bg);
+  border-color: var(--pc-rarity-epic);
+}
+
+.pc-rarity-legendary {
+  color: var(--pc-ink-on-accent);
+  background: linear-gradient(135deg, #ffd24a, #ff8c42);
+  border-color: var(--pc-rarity-legendary);
+  box-shadow: var(--pc-shadow-glow-gold);
 }
 
 * {
@@ -210,6 +493,14 @@ a {
   font-weight: 700;
 }
 
+.pc-bottom-link.is-active .pc-nav-icon {
+  background: var(--pc-primary-tint);
+  border-radius: var(--pc-r-md);
+  padding: 4px;
+  width: 28px;
+  height: 28px;
+}
+
 .card {
   background: var(--pc-surface);
   border: 1px solid var(--pc-line);
@@ -301,20 +592,36 @@ a {
   border-radius: 10px;
   min-height: 36px;
   padding: 8px 12px;
-  background: #262b40;
+  background: var(--pc-surface-elevated);
   color: var(--pc-text);
   font-weight: 600;
+  transition: transform var(--pc-d-micro) var(--pc-ease-bounce),
+    box-shadow var(--pc-d-base) var(--pc-ease-standard),
+    border-color var(--pc-d-base) var(--pc-ease-standard);
+}
+
+.pc-button:hover {
+  border-color: var(--pc-border-strong);
+}
+
+.pc-button:active {
+  transform: scale(0.97);
 }
 
 .pc-button-primary {
   border-color: var(--pc-primary);
   background: var(--pc-primary);
-  color: #1a1206;
-  box-shadow: 0 0 20px rgba(255, 176, 32, 0.38);
+  color: var(--pc-ink-on-primary);
+  box-shadow: 0 2px 0 var(--pc-primary-press), var(--pc-shadow-glow-amber);
+}
+
+.pc-button-primary:hover {
+  background: var(--pc-primary-hover);
 }
 
 .pc-button:disabled {
   opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .pc-pill-row {
