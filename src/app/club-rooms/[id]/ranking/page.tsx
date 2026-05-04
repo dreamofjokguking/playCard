@@ -45,13 +45,17 @@ export default function RankingPage() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
 
-  // 매치 목록 1회 로드
+  // 매치 목록 1회 로드 + 기본값을 가장 최근 매치로 설정
   useEffect(() => {
     let active = true;
     fetch(`/api/club-rooms/${encodeURIComponent(clubRoomId)}/matches`, { cache: 'no-store' })
       .then((res) => res.json())
       .then((json: { success: boolean; data?: MatchOption[] }) => {
-        if (active && json.success) setMatches(json.data ?? []);
+        if (!active || !json.success) return;
+        const list = json.data ?? [];
+        setMatches(list);
+        // 가장 최근 매치를 기본 선택. 매치 없으면 시즌 누적 유지.
+        if (list.length > 0) setMatchId((prev) => (prev === SEASON_ALL ? list[0]._id : prev));
       })
       .catch(() => undefined);
     return () => {

@@ -275,7 +275,7 @@ async function _POST(request: NextRequest) {
         declaredMetricsByUser
       });
 
-      // AI 칭호 생성 (Gemini 활성화 시) — 참여자별 병렬 호출
+      // AI 칭호 생성 (Gemini 활성화 시) — 평가자 과반(50%) 이상이 그 선수에게 점수를 매긴 경우만
       if (isGeminiEnabled() && results.playerStats.length > 0) {
         const userIds = results.playerStats.map((stat) => stat.userId);
         const users = await User.find({ _id: { $in: userIds } })
@@ -285,9 +285,18 @@ async function _POST(request: NextRequest) {
           users.map((user) => [String(user._id), user.displayName || user.nickname || String(user._id)])
         );
         const settings = await loadAiSettings();
+        const evaluatorCount = updatedMatch.evaluationsSubmitted.length;
+        const titleThreshold = Math.ceil(evaluatorCount * 0.5);
+        // 만장일치 MVP: 모든 평가자가 같은 사람을 MVP로 뽑은 경우만 legendary 자격
+        const unanimousMvpUserId =
+          results.playerStats.find((stat) => stat.mvpCount === evaluatorCount && evaluatorCount > 0)?.userId ?? null;
 
         const titled = await Promise.all(
           results.playerStats.map(async (stat) => {
+            // 그 선수에게 실제로 점수를 매긴 평가자 수 추정 = metricStats 중 max(count)
+            const ratedBy = stat.metricStats.reduce((max, metric) => Math.max(max, metric.count), 0);
+            if (ratedBy < titleThreshold) return stat;
+
             const displayName = nameMap.get(stat.userId) ?? stat.userId;
             const generated = await generateTitle(
               {
@@ -298,7 +307,14 @@ async function _POST(request: NextRequest) {
               settings
             );
             if (!generated) return stat;
-            return { ...stat, title: generated.title, rarity: generated.rarity };
+            // legendary는 만장일치 MVP에게만. 그 외는 AI가 legendary 응답해도 epic으로 강등.
+            let finalRarity: TitleRarity = generated.rarity;
+            if (stat.userId === unanimousMvpUserId) {
+              finalRarity = 'legendary';
+            } else if (generated.rarity === 'legendary') {
+              finalRarity = 'epic';
+            }
+            return { ...stat, title: generated.title, rarity: finalRarity };
           })
         );
         results.playerStats = titled;

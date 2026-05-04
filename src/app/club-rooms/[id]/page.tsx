@@ -182,13 +182,15 @@ export default function ClubRoomMainPage({ params }: { params: { id: string } })
                 <span className="pc-avatar">{dashboard.user.displayName.slice(0, 1)}</span>
                 <div>
                   <div style={{ fontWeight: 800 }}>{dashboard.user.displayName}</div>
-                  <Link
-                    href={`/club-rooms/${clubRoomId}/titles`}
-                    className="pc-meta"
-                    style={{ textDecoration: 'underline' }}
-                  >
-                    {dashboard.user.currentTitle || '칭호 없음'} · 도감 보기
-                  </Link>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                    <span className="pc-meta">{dashboard.user.currentTitle || '칭호 없음'}</span>
+                    <Link href={`/club-rooms/${clubRoomId}/titles`} className="pc-meta" style={{ textDecoration: 'underline' }}>
+                      도감
+                    </Link>
+                    <Link href={`/club-rooms/${clubRoomId}/history`} className="pc-meta" style={{ textDecoration: 'underline' }}>
+                      히스토리
+                    </Link>
+                  </div>
                 </div>
               </div>
               <div style={{ textAlign: 'right' }}>

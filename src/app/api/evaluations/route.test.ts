@@ -344,6 +344,17 @@ describe('/api/evaluations', () => {
                 comment: '좋음'
               }
             ]
+          },
+          {
+            mvpPick: 'u1',
+            ratings: [
+              {
+                targetUserId: 'u1',
+                metricScores: [{ metricKey: 'attack', score: 7.0 }],
+                absences: [],
+                comment: '안정적'
+              }
+            ]
           }
         ])
       })
@@ -365,7 +376,7 @@ describe('/api/evaluations', () => {
     const res = await POST(req);
     expect(res.status).toBe(201);
 
-    // 칭호 생성이 참여자 수만큼 호출됨
+    // 양쪽 모두 1명에게 평가받음 → threshold(ceil(2*0.5)=1) 통과 → 둘 다 칭호 생성
     expect(generateTitleMock).toHaveBeenCalledTimes(2);
 
     // playerStats에 title/rarity가 보강되어 저장됨
@@ -385,5 +396,128 @@ describe('/api/evaluations', () => {
       'u2',
       expect.objectContaining({ currentTitle: '상대의 칭호', currentRarity: 'epic' })
     );
+  });
+
+  it('skips title generation for players whose ratedBy < majority threshold', async () => {
+    // 4명 매치 시나리오 — evaluator 4명, threshold = ceil(4 * 0.5) = 2
+    // u2는 1명에게만 평가받음(ratedBy=1) → 임계 미달, 칭호 스킵
+    // u3는 2명에게 평가받음(ratedBy=2) → 임계 통과, 칭호 생성
+    // u4는 3명에게 평가받음(ratedBy=3) → 임계 통과, 칭호 생성
+    isGeminiEnabledMock.mockReturnValue(true);
+    generateTitleMock.mockResolvedValue({ title: '테스트', rarity: 'rare' });
+    findUserList.mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        lean: vi.fn().mockResolvedValue([
+          { _id: 'u1', displayName: 'A' },
+          { _id: 'u2', displayName: 'B' },
+          { _id: 'u3', displayName: 'C' },
+          { _id: 'u4', displayName: 'D' }
+        ])
+      })
+    });
+
+    getActorIdFromSession.mockReturnValue('u1');
+    findById.mockReturnValue({
+      lean: vi.fn().mockResolvedValue({
+        _id: 'm1',
+        clubRoomId: 'room-1',
+        status: 'evaluating',
+        participants: ['u1', 'u2', 'u3', 'u4'],
+        positionSubmissions: [
+          { userId: 'u1', selectedMetrics: ['attack'] },
+          { userId: 'u2', selectedMetrics: ['attack'] },
+          { userId: 'u3', selectedMetrics: ['attack'] },
+          { userId: 'u4', selectedMetrics: ['attack'] }
+        ]
+      })
+    });
+    create.mockResolvedValue({ _id: 'e1' });
+    findByIdAndUpdate
+      .mockReturnValueOnce({
+        lean: vi.fn().mockResolvedValue({
+          _id: 'm1',
+          clubRoomId: 'room-1',
+          participants: ['u1', 'u2', 'u3', 'u4'],
+          evaluationsSubmitted: ['u1', 'u2', 'u3', 'u4'],
+          positionSubmissions: [
+            { userId: 'u1', selectedMetrics: ['attack'] },
+            { userId: 'u2', selectedMetrics: ['attack'] },
+            { userId: 'u3', selectedMetrics: ['attack'] },
+            { userId: 'u4', selectedMetrics: ['attack'] }
+          ]
+        })
+      })
+      .mockResolvedValueOnce({});
+    // 평가 분포:
+    //  u1 → u3, u4 (2명 평가)
+    //  u2 → u4 (1명 평가)
+    //  u3 → u1, u4 (2명 평가)
+    //  u4 → u3 (1명 평가)
+    // 결과: u1 ratedBy=1, u2 ratedBy=0, u3 ratedBy=3, u4 ratedBy=3
+    find.mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        lean: vi.fn().mockResolvedValue([
+          {
+            mvpPick: 'u4',
+            ratings: [
+              { targetUserId: 'u3', metricScores: [{ metricKey: 'attack', score: 7 }], absences: [] },
+              { targetUserId: 'u4', metricScores: [{ metricKey: 'attack', score: 8 }], absences: [] }
+            ]
+          },
+          {
+            mvpPick: 'u4',
+            ratings: [{ targetUserId: 'u4', metricScores: [{ metricKey: 'attack', score: 7 }], absences: [] }]
+          },
+          {
+            mvpPick: 'u1',
+            ratings: [
+              { targetUserId: 'u1', metricScores: [{ metricKey: 'attack', score: 7 }], absences: [] },
+              { targetUserId: 'u4', metricScores: [{ metricKey: 'attack', score: 7 }], absences: [] }
+            ]
+          },
+          {
+            mvpPick: 'u3',
+            ratings: [{ targetUserId: 'u3', metricScores: [{ metricKey: 'attack', score: 8 }], absences: [] }]
+          }
+        ])
+      })
+    });
+    findClubRoom.mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        lean: vi.fn().mockResolvedValue({ positionMetrics: [{ key: 'attack', isActive: true }] })
+      })
+    });
+
+    const req = new NextRequest('http://localhost/api/evaluations', {
+      method: 'POST',
+      body: JSON.stringify({
+        matchId: 'm1',
+        mvpPick: 'u3',
+        ratings: [{ targetUserId: 'u3', metricScores: [{ metricKey: 'attack', score: 8 }] }]
+      })
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(201);
+
+    // u3, u4만 임계 통과 → 칭호 2건만 생성
+    expect(generateTitleMock).toHaveBeenCalledTimes(2);
+
+    const persisted = (findByIdAndUpdate.mock.calls[1][1] as {
+      results: { playerStats: Array<{ userId: string; title?: string }> };
+    }).results;
+    const u1Stat = persisted.playerStats.find((row) => row.userId === 'u1');
+    const u2Stat = persisted.playerStats.find((row) => row.userId === 'u2');
+    const u3Stat = persisted.playerStats.find((row) => row.userId === 'u3');
+    const u4Stat = persisted.playerStats.find((row) => row.userId === 'u4');
+    expect(u1Stat?.title).toBeFalsy(); // ratedBy=1, threshold=2
+    expect(u2Stat?.title).toBeFalsy(); // ratedBy=0
+    expect(u3Stat?.title).toBe('테스트'); // ratedBy=3
+    expect(u4Stat?.title).toBe('테스트'); // ratedBy=3
+
+    // User doc 갱신은 칭호 생성된 사람만 (u3, u4)
+    const updatedUserIds = findByIdAndUpdateUser.mock.calls.map((call) => call[0]);
+    expect(updatedUserIds).toEqual(expect.arrayContaining(['u3', 'u4']));
+    expect(updatedUserIds).not.toContain('u1');
+    expect(updatedUserIds).not.toContain('u2');
   });
 });
