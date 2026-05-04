@@ -55,5 +55,47 @@ describe('/api/evaluations/current', () => {
     expect(body.success).toBe(true);
     expect(body.data).toBeNull();
   });
+
+  it('returns evaluating match with participants and team assignments', async () => {
+    getActorIdFromSession.mockReturnValue('u1');
+    findOne.mockReturnValue({
+      sort: vi.fn().mockReturnValue({
+        lean: vi.fn().mockResolvedValue({
+          _id: 'm1',
+          clubRoomId: 'room-1',
+          date: new Date('2026-05-04'),
+          time: '19:00',
+          participants: ['u1', 'u2'],
+          teamAssignments: [{ userId: 'u1', team: 'red' }],
+          positionSubmissions: [],
+          evaluationsSubmitted: []
+        })
+      })
+    });
+    findById.mockReturnValue({
+      lean: vi.fn().mockResolvedValue({
+        positionMetrics: []
+      })
+    });
+    find.mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        lean: vi.fn().mockResolvedValue([
+          { _id: 'u1', displayName: 'Tester1', nickname: 'Tester1' },
+          { _id: 'u2', displayName: 'Tester2', nickname: 'Tester2' }
+        ])
+      })
+    });
+
+    const res = await GET(new NextRequest('http://localhost/api/evaluations/current'));
+    const body = (await res.json()) as {
+      success: boolean;
+      data: { match: { _id: string; teamAssignments: Array<{ userId: string; team: string }> } };
+    };
+
+    expect(res.status).toBe(200);
+    expect(body.success).toBe(true);
+    expect(body.data.match._id).toBe('m1');
+    expect(body.data.match.teamAssignments).toEqual([{ userId: 'u1', team: 'red' }]);
+  });
 });
 

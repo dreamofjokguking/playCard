@@ -54,6 +54,7 @@ async function _GET(request: NextRequest) {
         date: match.date,
         time: match.time,
         participants: match.participants,
+        teamAssignments: match.teamAssignments ?? [],
         evaluationsSubmitted: match.evaluationsSubmitted ?? []
       },
       metrics: activeMetrics,

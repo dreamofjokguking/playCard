@@ -52,5 +52,43 @@ describe('/api/matches/[id]/results', () => {
     const res = await GET(new NextRequest('http://localhost/api/matches/m1/results'), { params: { id: 'm1' } });
     expect(res.status).toBe(400);
   });
+
+  it('returns result payload including team assignments', async () => {
+    getActorIdFromSession.mockReturnValue('u1');
+    findById.mockReturnValue({
+      lean: vi.fn().mockResolvedValue({
+        _id: 'm1',
+        date: new Date('2026-05-04'),
+        time: '19:00',
+        venue: 'A구장',
+        status: 'completed',
+        participants: ['u1', 'u2'],
+        teamAssignments: [{ userId: 'u1', team: 'red' }],
+        results: {
+          playerStats: [
+            { userId: 'u1', metricStats: [], overall: 8.2, absences: [], mvpCount: 1, comments: [] },
+            { userId: 'u2', metricStats: [], overall: 7.8, absences: [], mvpCount: 0, comments: [] }
+          ]
+        }
+      })
+    });
+    find.mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        lean: vi.fn().mockResolvedValue([
+          { _id: 'u1', displayName: 'Tester1', nickname: 'Tester1' },
+          { _id: 'u2', displayName: 'Tester2', nickname: 'Tester2' }
+        ])
+      })
+    });
+
+    const res = await GET(new NextRequest('http://localhost/api/matches/m1/results'), { params: { id: 'm1' } });
+    const body = (await res.json()) as {
+      success: boolean;
+      data: { match: { teamAssignments: Array<{ userId: string; team: string }> } };
+    };
+    expect(res.status).toBe(200);
+    expect(body.success).toBe(true);
+    expect(body.data.match.teamAssignments).toEqual([{ userId: 'u1', team: 'red' }]);
+  });
 });
 

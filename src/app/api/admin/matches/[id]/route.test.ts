@@ -27,7 +27,7 @@ vi.mock('@/lib/models/Match', () => ({
   }
 }));
 
-const { PATCH } = await import('./route');
+const { GET, PATCH } = await import('./route');
 
 describe('/api/admin/matches/[id]', () => {
   beforeEach(() => {
@@ -88,5 +88,22 @@ describe('/api/admin/matches/[id]', () => {
     });
     const res = await PATCH(req, { params: { id: 'm1' } });
     expect(res.status).toBe(403);
+  });
+
+  it('returns match by id for authorized user', async () => {
+    getActorAccess.mockResolvedValue({
+      ok: true,
+      access: { actorId: 'admin-1', role: 'service_admin', isServiceAdmin: true }
+    });
+    findById.mockReturnValue({
+      lean: vi.fn().mockResolvedValue({ _id: 'm1', clubRoomId: 'room-1', participants: ['u1'] })
+    });
+
+    const req = new NextRequest('http://localhost/api/admin/matches/m1');
+    const res = await GET(req, { params: { id: 'm1' } });
+    const body = (await res.json()) as { success: boolean; data: { _id: string } };
+    expect(res.status).toBe(200);
+    expect(body.success).toBe(true);
+    expect(body.data._id).toBe('m1');
   });
 });

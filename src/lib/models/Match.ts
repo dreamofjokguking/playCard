@@ -7,6 +7,18 @@ const MatchSchema = new Schema(
     time: { type: String, required: true, trim: true },
     venue: { type: String, trim: true, default: '' },
     participants: { type: [String], default: [] },
+    teamAssignments: {
+      type: [
+        new Schema(
+          {
+            userId: { type: String, required: true, trim: true },
+            team: { type: String, enum: ['red', 'blue'], required: true }
+          },
+          { _id: false }
+        )
+      ],
+      default: []
+    },
     status: {
       type: String,
       enum: ['evaluating', 'completed', 'cancelled'],

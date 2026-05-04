@@ -15,7 +15,13 @@ type ResultRow = {
 
 type ResultPayload = {
   viewerId: string;
-  match: { _id: string; date: string; time: string; venue?: string };
+  match: {
+    _id: string;
+    date: string;
+    time: string;
+    venue?: string;
+    teamAssignments?: Array<{ userId: string; team: 'red' | 'blue' }>;
+  };
   mvpUserId: string;
   playerStats: ResultRow[];
 };
@@ -48,6 +54,12 @@ export default function EvaluationResultPage({ params }: { params: { matchId: st
   }, [params.matchId]);
 
   const podium = useMemo(() => data?.playerStats.slice(0, 3) ?? [], [data]);
+  const teamMap = useMemo(() => {
+    const map = new Map<string, 'red' | 'blue'>();
+    if (!data) return map;
+    for (const row of data.match.teamAssignments ?? []) map.set(row.userId, row.team);
+    return map;
+  }, [data]);
 
   if (loading) {
     return (
@@ -95,10 +107,12 @@ export default function EvaluationResultPage({ params }: { params: { matchId: st
           {data.playerStats.map((row) => {
             const isMine = row.userId === data.viewerId;
             const isMvp = row.userId === data.mvpUserId;
+            const team = teamMap.get(row.userId);
             return (
               <li key={row.userId} className={`pc-result-item${isMine ? ' is-mine' : ''}${isMvp ? ' is-mvp' : ''}`}>
                 <strong>
                   {row.rank}위 {row.displayName}
+                  {team ? ` (${team === 'red' ? 'Red' : 'Blue'})` : ''}
                 </strong>{' '}
                 / 종합 {row.overall}
                 {isMvp ? ' / MVP' : ''}
