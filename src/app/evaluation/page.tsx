@@ -40,6 +40,8 @@ type RatingState = {
   comment: string;
 };
 
+type TeamFilter = 'all' | 'opponent' | 'mine' | 'unknown';
+
 export default function EvaluationPage() {
   const router = useRouter();
   const [payload, setPayload] = useState<CurrentEvaluationResponse | null>(null);
@@ -49,6 +51,7 @@ export default function EvaluationPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState('');
+  const [teamFilter, setTeamFilter] = useState<TeamFilter>('all');
 
   const actorPositionSubmitted = useMemo(() => {
     if (!payload) return false;
@@ -87,16 +90,19 @@ export default function EvaluationPage() {
     const unknown: Participant[] = [];
     for (const participant of targetParticipants) {
       const team = teamMap.get(participant._id);
-      if (!actorTeam || !team) {
-        unknown.push(participant);
-      } else if (team === actorTeam) {
-        mine.push(participant);
-      } else {
-        opponent.push(participant);
-      }
+      if (!actorTeam || !team) unknown.push(participant);
+      else if (team === actorTeam) mine.push(participant);
+      else opponent.push(participant);
     }
     return { mine, opponent, unknown };
   }, [targetParticipants, teamMap, actorTeam]);
+
+  const visibleTargets = useMemo(() => {
+    if (teamFilter === 'opponent') return groupedTargets.opponent;
+    if (teamFilter === 'mine') return groupedTargets.mine;
+    if (teamFilter === 'unknown') return groupedTargets.unknown;
+    return [...groupedTargets.opponent, ...groupedTargets.mine, ...groupedTargets.unknown];
+  }, [groupedTargets, teamFilter]);
 
   const mvpCandidates = useMemo(
     () => [...groupedTargets.opponent, ...groupedTargets.mine, ...groupedTargets.unknown],
@@ -171,7 +177,7 @@ export default function EvaluationPage() {
         setMessage(json.message || '포지션 제출에 실패했습니다.');
         return;
       }
-      setMessage(json.data?.allSubmitted ? '포지션 제출 완료. 평가 시작 알림을 발송했습니다.' : '포지션 제출 완료');
+      setMessage(json.data?.allSubmitted ? '포지션 제출 완료. 모든 제출이 끝나 평가가 시작됩니다.' : '포지션 제출 완료');
       await load();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : '요청에 실패했습니다.');
@@ -308,8 +314,23 @@ export default function EvaluationPage() {
               내 팀: {actorTeam === 'red' ? 'Red' : 'Blue'}
             </p>
           ) : null}
+          <div className="pc-pill-row" style={{ marginBottom: 10 }}>
+            <button className={`pc-pill${teamFilter === 'all' ? ' is-active' : ''}`} onClick={() => setTeamFilter('all')}>
+              전체
+            </button>
+            <button className={`pc-pill${teamFilter === 'opponent' ? ' is-active' : ''}`} onClick={() => setTeamFilter('opponent')}>
+              상대팀
+            </button>
+            <button className={`pc-pill${teamFilter === 'mine' ? ' is-active' : ''}`} onClick={() => setTeamFilter('mine')}>
+              내팀
+            </button>
+            <button className={`pc-pill${teamFilter === 'unknown' ? ' is-active' : ''}`} onClick={() => setTeamFilter('unknown')}>
+              미분류
+            </button>
+          </div>
+
           <div className="pc-stack">
-            {[...groupedTargets.opponent, ...groupedTargets.mine, ...groupedTargets.unknown].map((participant) => {
+            {visibleTargets.map((participant) => {
               const rating = ratings.find((row) => row.targetUserId === participant._id);
               if (!rating) return null;
               const participantTeam = teamMap.get(participant._id);
@@ -319,11 +340,12 @@ export default function EvaluationPage() {
                     ? '내 팀'
                     : '상대 팀'
                   : '팀 미분류';
+
               return (
                 <article key={participant._id} className="pc-result-item">
                   <strong>
                     {participant.displayName}
-                    {teamMap.get(participant._id) ? ` (${teamMap.get(participant._id) === 'red' ? 'Red' : 'Blue'})` : ''}
+                    {participantTeam ? ` (${participantTeam === 'red' ? 'Red' : 'Blue'})` : ''}
                   </strong>
                   <div className="pc-meta">{relation}</div>
                   <div className="pc-meta">제출 포지션: {(positionMap.get(participant._id) ?? []).join(', ') || '-'}</div>
@@ -354,6 +376,7 @@ export default function EvaluationPage() {
                 </article>
               );
             })}
+            {visibleTargets.length === 0 ? <p className="pc-meta">현재 필터에 해당하는 평가 대상이 없습니다.</p> : null}
           </div>
 
           <div style={{ marginTop: 12 }}>
