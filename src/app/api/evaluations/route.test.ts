@@ -83,6 +83,89 @@ describe('/api/evaluations', () => {
     expect(res.status).toBe(400);
   });
 
+  it('rejects absences outside the target position range', async () => {
+    getActorIdFromSession.mockReturnValue('u1');
+    findById.mockReturnValue({
+      lean: vi.fn().mockResolvedValue({
+        _id: 'm1',
+        clubRoomId: 'room-1',
+        status: 'evaluating',
+        participants: ['u1', 'u2'],
+        positionSubmissions: [
+          { userId: 'u1', selectedMetrics: ['attack'] },
+          { userId: 'u2', selectedMetrics: ['attack'] }
+        ]
+      })
+    });
+
+    const req = new NextRequest('http://localhost/api/evaluations', {
+      method: 'POST',
+      body: JSON.stringify({
+        matchId: 'm1',
+        mvpPick: 'u2',
+        ratings: [
+          {
+            targetUserId: 'u2',
+            metricScores: [{ metricKey: 'attack', score: 7 }],
+            absences: ['defense']
+          }
+        ]
+      })
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+  });
+
+  it('drops absent metric scores from the persisted rating', async () => {
+    getActorIdFromSession.mockReturnValue('u1');
+    findById.mockReturnValue({
+      lean: vi.fn().mockResolvedValue({
+        _id: 'm1',
+        clubRoomId: 'room-1',
+        status: 'evaluating',
+        participants: ['u1', 'u2'],
+        positionSubmissions: [
+          { userId: 'u1', selectedMetrics: ['attack', 'defense'] },
+          { userId: 'u2', selectedMetrics: ['attack', 'defense'] }
+        ]
+      })
+    });
+    create.mockResolvedValue({ _id: 'e1' });
+    findByIdAndUpdate.mockReturnValueOnce({
+      lean: vi.fn().mockResolvedValue({
+        _id: 'm1',
+        participants: ['u1', 'u2'],
+        evaluationsSubmitted: ['u1']
+      })
+    });
+
+    const req = new NextRequest('http://localhost/api/evaluations', {
+      method: 'POST',
+      body: JSON.stringify({
+        matchId: 'm1',
+        mvpPick: 'u2',
+        ratings: [
+          {
+            targetUserId: 'u2',
+            metricScores: [
+              { metricKey: 'attack', score: 8.4 },
+              { metricKey: 'defense', score: 5 }
+            ],
+            absences: ['defense'],
+            comment: '공격 좋음'
+          }
+        ]
+      })
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(201);
+
+    const persisted = create.mock.calls[0][0];
+    const rating = persisted.ratings[0];
+    expect(rating.absences).toEqual(['defense']);
+    expect(rating.metricScores).toEqual([{ metricKey: 'attack', score: 8.4 }]);
+  });
+
   it('completes match and stores aggregated results on last submission', async () => {
     getActorIdFromSession.mockReturnValue('u1');
     findById.mockReturnValue({

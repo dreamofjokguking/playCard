@@ -153,15 +153,23 @@ async function _POST(request: NextRequest) {
   }
 
   const normalizedRatings: RatingInput[] = ratings
-    .map((rating) => ({
-      targetUserId: rating.targetUserId.trim(),
-      metricScores: (rating.metricScores ?? []).map((score) => ({
-        metricKey: score.metricKey.trim(),
-        score: typeof score.score === 'number' ? score.score : undefined
-      })),
-      absences: (rating.absences ?? []).map((value) => value.trim()).filter(Boolean),
-      comment: (rating.comment ?? '').trim()
-    }))
+    .map((rating) => {
+      const absences = Array.from(
+        new Set((rating.absences ?? []).map((value) => value.trim()).filter(Boolean))
+      );
+      const absenceSet = new Set(absences);
+      return {
+        targetUserId: rating.targetUserId.trim(),
+        metricScores: (rating.metricScores ?? [])
+          .map((score) => ({
+            metricKey: score.metricKey.trim(),
+            score: typeof score.score === 'number' ? score.score : undefined
+          }))
+          .filter((score) => score.metricKey && !absenceSet.has(score.metricKey)),
+        absences,
+        comment: (rating.comment ?? '').trim()
+      };
+    })
     .filter((rating) => rating.targetUserId && rating.targetUserId !== actorId);
 
   if (normalizedRatings.length === 0) {
@@ -179,11 +187,23 @@ async function _POST(request: NextRequest) {
   const hasInvalidMetricByTarget = normalizedRatings.some((rating) => {
     const allowed = positionMap.get(rating.targetUserId);
     if (!allowed || allowed.size === 0) return true;
-    return rating.metricScores.some((metricScore) => !allowed.has(metricScore.metricKey));
+    if (rating.metricScores.some((metricScore) => !allowed.has(metricScore.metricKey))) return true;
+    if ((rating.absences ?? []).some((metricKey) => !allowed.has(metricKey))) return true;
+    return false;
   });
   if (hasInvalidMetricByTarget) {
     return NextResponse.json(
       { success: false, message: '평가표는 각 선수의 제출 포지션 범위 내에서만 작성할 수 있습니다.' },
+      { status: 400 }
+    );
+  }
+
+  const hasNoScorable = normalizedRatings.some(
+    (rating) => rating.metricScores.length === 0 && (rating.absences ?? []).length === 0
+  );
+  if (hasNoScorable) {
+    return NextResponse.json(
+      { success: false, message: '각 선수에 대해 최소 한 개 이상의 점수 또는 결장 처리가 필요합니다.' },
       { status: 400 }
     );
   }

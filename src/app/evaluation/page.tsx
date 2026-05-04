@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import ScoreSlider from '@/components/ui/ScoreSlider';
 
 type Metric = {
   key: string;
@@ -112,6 +113,13 @@ export default function EvaluationPage() {
   const submittedCount = payload?.match.evaluationsSubmitted.length ?? 0;
   const totalCount = payload?.match.participants.length ?? 0;
   const progressPercent = totalCount > 0 ? Math.round((submittedCount / totalCount) * 100) : 0;
+
+  const metricLabelMap = useMemo(() => {
+    const map = new Map<string, string>();
+    if (!payload) return map;
+    for (const metric of payload.metrics) map.set(metric.key, metric.label);
+    return map;
+  }, [payload]);
 
   const canSubmitEvaluation = useMemo(() => {
     if (!payload || !isEvaluationReady || !mvpPick || ratings.length === 0) return false;
@@ -351,26 +359,19 @@ export default function EvaluationPage() {
                   <div className="pc-meta">제출 포지션: {(positionMap.get(participant._id) ?? []).join(', ') || '-'}</div>
                   <div className="pc-stack">
                     {rating.metricScores.map((metric) => (
-                      <label key={metric.metricKey} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                        <span>{metric.metricKey}</span>
-                        <input
-                          type="number"
-                          min={0}
-                          max={10}
-                          step={0.1}
-                          value={metric.score}
-                          onChange={(event) => setScore(participant._id, metric.metricKey, Number(event.target.value))}
-                          className="pc-button"
-                          style={{ width: 88, padding: '6px 10px' }}
-                        />
-                      </label>
+                      <ScoreSlider
+                        key={metric.metricKey}
+                        metricKey={metric.metricKey}
+                        metricLabel={metricLabelMap.get(metric.metricKey) ?? metric.metricKey}
+                        score={metric.score}
+                        onScoreChange={(score) => setScore(participant._id, metric.metricKey, score)}
+                      />
                     ))}
                     <input
                       value={rating.comment}
                       onChange={(event) => setComment(participant._id, event.target.value)}
-                      placeholder="코멘트 (선택)"
-                      className="pc-button"
-                      style={{ width: '100%', textAlign: 'left' }}
+                      placeholder="오늘 이 선수에 대해 한마디!"
+                      className="pc-field"
                     />
                   </div>
                 </article>
