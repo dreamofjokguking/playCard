@@ -32,6 +32,7 @@
 | Admin AI Settings | `/api/admin/ai/settings` | `admin/ai/settings/route.ts` (GET, PATCH) — service_admin 전용. titlePrompt/modelName 관리 |
 | User Titles | `/api/users/[id]/titles` | `users/[id]/titles/route.ts` (GET) — 본인 칭호 도감(현재 칭호 + titleHistory) |
 | Club Room Matches | `/api/club-rooms/[id]/matches` | `club-rooms/[id]/matches/route.ts` (GET) — 그 클럽의 완료 매치 목록(드롭다운용) |
+| Club Room History | `/api/club-rooms/[id]/history` | `club-rooms/[id]/history/route.ts` (GET) — 사용자×메트릭 매트릭스(매치별 평균+증감) |
 
 ## 도메인별 MAP
 

@@ -45,6 +45,10 @@ async function _GET(request: NextRequest, context: { params: { id: string } }) {
     null as (typeof sorted)[number] | null
   )?.userId;
 
+  const evaluatorCount = match.evaluationsSubmitted?.length ?? 0;
+  const mvpStat = sorted.find((row) => row.userId === mvpUserId);
+  const isUnanimousMvp = Boolean(mvpStat && evaluatorCount > 0 && mvpStat.mvpCount === evaluatorCount);
+
   return NextResponse.json({
     success: true,
     data: {
@@ -57,6 +61,8 @@ async function _GET(request: NextRequest, context: { params: { id: string } }) {
         teamAssignments: match.teamAssignments ?? []
       },
       mvpUserId: mvpUserId ?? '',
+      isUnanimousMvp,
+      evaluatorCount,
       playerStats: sorted.map((row, index) => ({
         rank: index + 1,
         userId: row.userId,
@@ -65,7 +71,9 @@ async function _GET(request: NextRequest, context: { params: { id: string } }) {
         overall: row.overall,
         absences: row.absences,
         mvpCount: row.mvpCount,
-        comments: row.comments
+        comments: row.comments,
+        title: row.title ?? '',
+        rarity: row.rarity ?? 'common'
       }))
     }
   });
