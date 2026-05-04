@@ -4,6 +4,7 @@ import { dbConnect } from '@/lib/db';
 import { getActorIdFromSession } from '@/lib/authSession';
 import Match from '@/lib/models/Match';
 import Evaluation from '@/lib/models/Evaluation';
+import ClubRoom from '@/lib/models/ClubRoom';
 import { broadcastNotification } from '@/lib/notifications';
 
 export const dynamic = 'force-dynamic';
@@ -55,7 +56,16 @@ type AggregationEvaluation = {
   }>;
 };
 
-function aggregateResults(participants: string[], evaluations: AggregationEvaluation[]) {
+type AggregationContext = {
+  activeMetricKeys: string[];
+  declaredMetricsByUser: Map<string, string[]>;
+};
+
+function aggregateResults(
+  participants: string[],
+  evaluations: AggregationEvaluation[],
+  context: AggregationContext = { activeMetricKeys: [], declaredMetricsByUser: new Map() }
+) {
   const mvpCountMap = new Map<string, number>();
   for (const evaluation of evaluations) {
     const current = mvpCountMap.get(evaluation.mvpPick) ?? 0;
@@ -86,6 +96,15 @@ function aggregateResults(participants: string[], evaluations: AggregationEvalua
           total: current.total + metricScore.score,
           count: current.count + 1
         });
+      }
+    }
+
+    // 자동 결장 산출: 클럽룸의 활성 메트릭 중, 본인이 선언하지 않은 메트릭은 결장 처리
+    const declared = context.declaredMetricsByUser.get(userId);
+    if (declared && context.activeMetricKeys.length > 0) {
+      const declaredSet = new Set(declared);
+      for (const metricKey of context.activeMetricKeys) {
+        if (!declaredSet.has(metricKey)) absenceSet.add(metricKey);
       }
     }
 
@@ -238,7 +257,19 @@ async function _POST(request: NextRequest) {
       const evaluations = await Evaluation.find({ matchId })
         .select({ ratings: 1, mvpPick: 1 })
         .lean();
-      const results = aggregateResults(updatedMatch.participants, evaluations);
+      const clubRoom = (await ClubRoom.findById(updatedMatch.clubRoomId)
+        .select({ positionMetrics: 1 })
+        .lean()) as { positionMetrics?: Array<{ key: string; isActive?: boolean }> } | null;
+      const activeMetricKeys = (clubRoom?.positionMetrics ?? [])
+        .filter((metric) => metric.isActive !== false)
+        .map((metric) => metric.key);
+      const declaredMetricsByUser = new Map<string, string[]>(
+        (updatedMatch.positionSubmissions ?? []).map((row) => [row.userId, row.selectedMetrics ?? []])
+      );
+      const results = aggregateResults(updatedMatch.participants, evaluations, {
+        activeMetricKeys,
+        declaredMetricsByUser
+      });
       await Match.findByIdAndUpdate(matchId, {
         status: 'completed',
         results

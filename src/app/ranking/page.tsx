@@ -11,6 +11,7 @@ type RankingRow = {
   score: number;
   mvpCount: number;
   matchCount: number;
+  previousRank?: number | null;
 };
 
 const tabs = [
@@ -99,7 +100,14 @@ export default function RankingPage() {
         {!loading && rows.length > 0 ? (
           <div className="pc-stack">
             {rows.map((row) => (
-              <RankRow key={row.userId} rank={row.rank} name={row.displayName} score={row.score} badge={`MVP ${row.mvpCount}`} />
+              <RankRow
+                key={row.userId}
+                rank={row.rank}
+                name={row.displayName}
+                score={row.score}
+                badge={`MVP ${row.mvpCount}`}
+                previousRank={row.previousRank ?? null}
+              />
             ))}
           </div>
         ) : null}

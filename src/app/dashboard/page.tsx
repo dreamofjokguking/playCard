@@ -1,6 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import RadarChart from '@/components/ui/RadarChart';
+import LineChart from '@/components/ui/LineChart';
+import type { RadarPoint } from '@/components/ui/chartUtils';
 
 type DashboardResponse = {
   user: { _id: string; displayName: string; currentTitle: string };
@@ -16,8 +19,21 @@ type DashboardResponse = {
   }>;
 };
 
+const KOREAN_METRIC_LABELS: Record<string, string> = {
+  attack: '공격',
+  defense: '수비',
+  toss: '토스',
+  serve: '서브',
+  pass: '패스',
+  set: '세터'
+};
+
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
+}
+
+function metricLabel(key: string): string {
+  return KOREAN_METRIC_LABELS[key] ?? key;
 }
 
 export default function DashboardPage() {
@@ -59,6 +75,23 @@ export default function DashboardPage() {
     const score = latest?.overall ?? 0;
     return clamp(Math.round(score * 10), 0, 100);
   }, [latest]);
+
+  const radarPoints = useMemo<RadarPoint[]>(() => {
+    if (!data) return [];
+    return data.metricAverages.map((metric) => ({
+      metricKey: metric.metricKey,
+      label: metricLabel(metric.metricKey),
+      value: metric.avg
+    }));
+  }, [data]);
+
+  const lineData = useMemo(() => {
+    if (!data) return [];
+    return data.timeline.map((row) => ({
+      label: String(row.date).slice(5, 10),
+      value: row.overall
+    }));
+  }, [data]);
 
   if (loading) {
     return (
@@ -112,21 +145,33 @@ export default function DashboardPage() {
       </section>
 
       <section className="card">
-        <h2>능력치 요약</h2>
-        <div className="pc-stack">
-          <div className="quick-link">
-            <strong>BEST</strong>
-            <div style={{ marginTop: 6, fontWeight: 800 }}>
-              {data.bestMetric ? `${data.bestMetric.metricKey} ${data.bestMetric.avg}` : '-'}
-            </div>
+        <h2>능력치</h2>
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: 8 }}>
+          <RadarChart points={radarPoints} />
+        </div>
+        <div className="pc-stack" style={{ marginTop: 4 }}>
+          <div className="quick-link" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <strong style={{ color: 'var(--pc-accent)' }}>★ BEST</strong>
+            <span style={{ fontWeight: 800 }}>
+              {data.bestMetric ? `${metricLabel(data.bestMetric.metricKey)} ${data.bestMetric.avg}` : '-'}
+            </span>
           </div>
-          <div className="quick-link">
-            <strong>보완 필요</strong>
-            <div style={{ marginTop: 6, fontWeight: 800 }}>
-              {data.worstMetric ? `${data.worstMetric.metricKey} ${data.worstMetric.avg}` : '-'}
-            </div>
+          <div className="quick-link" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <strong style={{ color: '#60A5FA' }}>▼ NEED</strong>
+            <span style={{ fontWeight: 800 }}>
+              {data.worstMetric ? `${metricLabel(data.worstMetric.metricKey)} ${data.worstMetric.avg}` : '-'}
+            </span>
           </div>
         </div>
+      </section>
+
+      <section className="card">
+        <h2>성장 그래프</h2>
+        {lineData.length > 0 ? (
+          <LineChart data={lineData} />
+        ) : (
+          <p className="pc-meta">완료된 경기 데이터가 쌓이면 추이가 표시됩니다.</p>
+        )}
       </section>
 
       <section className="card">
@@ -139,7 +184,7 @@ export default function DashboardPage() {
                 <span style={{ color: 'var(--pc-primary)', fontWeight: 800 }}>{row.overall}</span>
               </div>
               <div className="pc-meta" style={{ marginTop: 6 }}>
-                {row.metrics.map((metric) => `${metric.metricKey} ${metric.avg}`).join(' · ') || '세부 지표 없음'}
+                {row.metrics.map((metric) => `${metricLabel(metric.metricKey)} ${metric.avg}`).join(' · ') || '세부 지표 없음'}
               </div>
             </div>
           ))}
