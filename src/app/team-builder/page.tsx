@@ -33,6 +33,7 @@ type MatchByIdResponse = {
   _id: string;
   clubRoomId: string;
   participants: string[];
+  participantRows?: Array<{ _id: string; displayName: string }>;
   teamAssignments?: Array<{ userId: string; team: 'red' | 'blue' }>;
 };
 
@@ -70,6 +71,7 @@ function TeamBuilderContent() {
     setLoading(true);
     setErrorMessage('');
     setNoticeMessage('');
+
     const endpoint = isShareView
       ? `/api/matches/${encodeURIComponent(targetMatchId)}/share`
       : `/api/admin/matches/${encodeURIComponent(targetMatchId)}`;
@@ -82,19 +84,25 @@ function TeamBuilderContent() {
     }
 
     const participantIds = matchJson.data.participants ?? [];
-    const memberRes = await fetch(
-      `/api/admin/members?clubRoomId=${encodeURIComponent(matchJson.data.clubRoomId)}&status=active`,
-      { cache: 'no-store' }
-    );
-    const memberJson = await parseJsonSafe<{ success: boolean; data?: MemberRow[]; message?: string }>(memberRes);
-    if (!memberRes.ok || !memberJson?.success || !memberJson.data) {
-      setErrorMessage(memberJson?.message || '멤버 정보를 불러오지 못했습니다.');
-      setLoading(false);
-      return;
+    let participants: Array<{ _id: string; displayName: string }>;
+
+    if (isShareView && Array.isArray(matchJson.data.participantRows)) {
+      participants = matchJson.data.participantRows;
+    } else {
+      const memberRes = await fetch(
+        `/api/admin/members?clubRoomId=${encodeURIComponent(matchJson.data.clubRoomId)}&status=active`,
+        { cache: 'no-store' }
+      );
+      const memberJson = await parseJsonSafe<{ success: boolean; data?: MemberRow[]; message?: string }>(memberRes);
+      if (!memberRes.ok || !memberJson?.success || !memberJson.data) {
+        setErrorMessage(memberJson?.message || '멤버 정보를 불러오지 못했습니다.');
+        setLoading(false);
+        return;
+      }
+      const nameMap = new Map(memberJson.data.map((m) => [m._id, m.displayName || m.nickname || m._id]));
+      participants = participantIds.map((id) => ({ _id: id, displayName: nameMap.get(id) || id }));
     }
 
-    const nameMap = new Map(memberJson.data.map((m) => [m._id, m.displayName || m.nickname || m._id]));
-    const participants = participantIds.map((id) => ({ _id: id, displayName: nameMap.get(id) || id }));
     const saved = Object.fromEntries((matchJson.data.teamAssignments ?? []).map((v) => [v.userId, v.team])) as Record<
       string,
       'red' | 'blue'
@@ -110,6 +118,7 @@ function TeamBuilderContent() {
     setLoading(true);
     setErrorMessage('');
     setNoticeMessage('');
+
     const res = await fetch('/api/evaluations/current', { cache: 'no-store' });
     const json = await parseJsonSafe<ApiResponse>(res);
     if (res.ok && json?.success && json.data?.participants?.length) {
@@ -137,6 +146,7 @@ function TeamBuilderContent() {
       setLoading(false);
       return;
     }
+
     const memberRes = await fetch(`/api/admin/members?clubRoomId=${encodeURIComponent(roomId)}&status=active`, { cache: 'no-store' });
     const memberJson = await parseJsonSafe<{ success: boolean; data?: MemberRow[] }>(memberRes);
     const participants = (memberJson?.data ?? [])

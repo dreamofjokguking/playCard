@@ -17,8 +17,9 @@ vi.mock('@/lib/authSession', () => ({
 }));
 
 const findOneUser = vi.fn();
+const findUser = vi.fn();
 vi.mock('@/lib/models/User', () => ({
-  default: { findOne: findOneUser }
+  default: { findOne: findOneUser, find: findUser }
 }));
 
 const findByIdMatch = vi.fn();
@@ -69,15 +70,24 @@ describe('/api/matches/[id]/share', () => {
         teamAssignments: [{ userId: 'u1', team: 'red' }]
       })
     });
+    findUser.mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        lean: vi.fn().mockResolvedValue([
+          { _id: 'u1', displayName: 'Tester1', nickname: 'Tester1' },
+          { _id: 'u2', displayName: 'Tester2', nickname: 'Tester2' }
+        ])
+      })
+    });
 
     const res = await GET(new NextRequest('http://localhost/api/matches/m1/share'), { params: { id: 'm1' } });
     const body = (await res.json()) as {
       success: boolean;
-      data: { _id: string; teamAssignments: Array<{ userId: string; team: string }> };
+      data: { _id: string; participantRows: Array<{ _id: string; displayName: string }>; teamAssignments: Array<{ userId: string; team: string }> };
     };
     expect(res.status).toBe(200);
     expect(body.success).toBe(true);
     expect(body.data._id).toBe('m1');
+    expect(body.data.participantRows[0].displayName).toBe('Tester1');
     expect(body.data.teamAssignments).toEqual([{ userId: 'u1', team: 'red' }]);
   });
 });
