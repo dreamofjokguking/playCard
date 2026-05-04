@@ -253,7 +253,7 @@ async function _POST(request: NextRequest) {
 
     if (updatedMatch && updatedMatch.evaluationsSubmitted.length >= updatedMatch.participants.length) {
       matchCompleted = true;
-      resultPath = `/evaluation/${String(updatedMatch._id)}/result`;
+      resultPath = `/club-rooms/${String(updatedMatch.clubRoomId)}/evaluation/${String(updatedMatch._id)}/result`;
       const evaluations = await Evaluation.find({ matchId })
         .select({ ratings: 1, mvpPick: 1 })
         .lean();

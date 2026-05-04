@@ -2,9 +2,11 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { navigationItems } from '@/components/layout/navigationItems';
+import { useNavigationItems } from '@/components/layout/useNavigationItems';
+
+type ClubBrief = { _id: string; name: string };
 
 function BellIcon() {
   return (
@@ -27,7 +29,37 @@ function MusicIcon() {
 
 export default function Header() {
   const pathname = usePathname();
-  const active = navigationItems.find((item) => item.href === pathname);
+  const items = useNavigationItems();
+  const active = items.find((item) => item.href === pathname);
+  const notificationsHref = items.find((item) => item.label === '알림')?.href ?? '/';
+  const [currentClub, setCurrentClub] = useState<ClubBrief | null>(null);
+
+  const clubRoomId = useMemo(() => {
+    if (!pathname) return null;
+    const match = pathname.match(/^\/club-rooms\/([^/]+)/);
+    if (!match) return null;
+    const candidate = match[1];
+    if (candidate === 'new' || candidate === 'search') return null;
+    return candidate;
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!clubRoomId) {
+      setCurrentClub(null);
+      return;
+    }
+    let active = true;
+    fetch(`/api/club-rooms/${clubRoomId}`, { cache: 'no-store' })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json: { success?: boolean; data?: ClubBrief } | null) => {
+        if (!active || !json?.success || !json.data) return;
+        setCurrentClub({ _id: json.data._id, name: json.data.name });
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [clubRoomId]);
   const [unreadCount, setUnreadCount] = useState(0);
 
   async function fetchUnreadCount() {
@@ -90,13 +122,20 @@ export default function Header() {
           <Link href="/" className="pc-logo">
             PlayCard
           </Link>
-          <div className="pc-active-page">{active?.label ?? '홈'}</div>
+          {clubRoomId ? (
+            <Link href="/" className="pc-club-chip" aria-label="다른 클럽 선택">
+              <span className="pc-club-chip-name">{currentClub?.name ?? '클럽 불러오는 중...'}</span>
+              <span className="pc-club-chip-action">↻ 변경</span>
+            </Link>
+          ) : (
+            <div className="pc-active-page">{active?.label ?? '클럽 선택'}</div>
+          )}
         </div>
         <div className="pc-header-meta">
           <button type="button" className="pc-icon-btn" aria-label="음악">
             <MusicIcon />
           </button>
-          <Link href="/notifications" className="pc-icon-btn" aria-label="알림">
+          <Link href={notificationsHref} className="pc-icon-btn" aria-label="알림">
             <BellIcon />
             {unreadCount > 0 ? <span className="pc-badge-dot">{unreadCount}</span> : null}
           </Link>

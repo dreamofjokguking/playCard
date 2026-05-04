@@ -245,7 +245,7 @@ describe('/api/evaluations', () => {
     expect(res.status).toBe(201);
     expect(body.success).toBe(true);
     expect(body.data?.matchCompleted).toBe(true);
-    expect(body.data?.resultPath).toBe('/evaluation/m1/result');
+    expect(body.data?.resultPath).toBe('/club-rooms/room-1/evaluation/m1/result');
     expect(findByIdAndUpdate).toHaveBeenCalledTimes(2);
     expect(findByIdAndUpdate).toHaveBeenNthCalledWith(
       2,

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 type MeResponse = {
@@ -11,6 +12,8 @@ type MeResponse = {
 };
 
 export default function AdminPage() {
+  const params = useParams<{ id: string }>();
+  const clubBase = `/club-rooms/${params.id}`;
   const [me, setMe] = useState<MeResponse | null>(null);
   const [message, setMessage] = useState('');
 
@@ -49,13 +52,13 @@ export default function AdminPage() {
       <section className="card">
         <h2>관리 작업</h2>
         <div className="pc-admin-actions">
-          <Link href="/admin/matches" className="pc-pill is-active">
+          <Link href={`${clubBase}/admin/matches`} className="pc-pill is-active">
             경기 관리
           </Link>
-          <Link href="/admin/matches/new" className="pc-pill">
+          <Link href={`${clubBase}/admin/matches/new`} className="pc-pill">
             경기 생성
           </Link>
-          <Link href="/admin/members" className="pc-pill">
+          <Link href={`${clubBase}/admin/members`} className="pc-pill">
             멤버 관리
           </Link>
         </div>

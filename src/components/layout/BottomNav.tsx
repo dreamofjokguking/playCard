@@ -2,16 +2,17 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { navigationItems } from '@/components/layout/navigationItems';
+import { useNavigationItems } from '@/components/layout/useNavigationItems';
 
 export default function BottomNav() {
   const pathname = usePathname();
-  const mobileItems = navigationItems.filter((item) => item.mobileVisible);
+  const items = useNavigationItems();
+  const mobileItems = items.filter((item) => item.mobileVisible);
 
   return (
     <nav className="pc-bottom-nav">
       {mobileItems.map((item) => {
-        const active = pathname === item.href;
+        const active = pathname === item.href || (item.href !== '/' && pathname?.startsWith(`${item.href}/`));
         const Icon = item.icon;
         return (
           <Link

@@ -21,9 +21,9 @@ vi.mock('@/lib/models/Match', () => ({
   default: { find: findMatch }
 }));
 
-const findByIdUser = vi.fn();
+const findOneUser = vi.fn();
 vi.mock('@/lib/models/User', () => ({
-  default: { findById: findByIdUser }
+  default: { findOne: findOneUser }
 }));
 
 const { GET } = await import('./route');
@@ -42,7 +42,7 @@ describe('/api/users/[id]/dashboard', () => {
 
   it('returns dashboard data for self', async () => {
     getActorIdFromSession.mockReturnValue('u1');
-    findByIdUser.mockReturnValue({
+    findOneUser.mockReturnValue({
       select: vi.fn().mockReturnValue({
         lean: vi.fn().mockResolvedValue({ _id: 'u1', displayName: '테스터1', currentTitle: '수비왕' })
       })
