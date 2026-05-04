@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 type CurrentEvaluationResponse = {
@@ -36,7 +36,7 @@ type MatchByIdResponse = {
   teamAssignments?: Array<{ userId: string; team: 'red' | 'blue' }>;
 };
 
-export default function TeamBuilderPage() {
+function TeamBuilderContent() {
   const searchParams = useSearchParams();
   const [rows, setRows] = useState<Array<{ _id: string; displayName: string }>>([]);
   const [manualAssignments, setManualAssignments] = useState<Record<string, 'red' | 'blue'>>({});
@@ -272,5 +272,20 @@ export default function TeamBuilderPage() {
         ) : null}
       </section>
     </>
+  );
+}
+
+export default function TeamBuilderPage() {
+  return (
+    <Suspense
+      fallback={
+        <section className="card">
+          <h1>팀 구성</h1>
+          <p>로딩 중...</p>
+        </section>
+      }
+    >
+      <TeamBuilderContent />
+    </Suspense>
   );
 }
