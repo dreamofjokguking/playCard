@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
+type Rarity = 'common' | 'rare' | 'epic' | 'legendary';
+
 type ResultRow = {
   rank: number;
   userId: string;
@@ -11,6 +13,22 @@ type ResultRow = {
   absences: string[];
   mvpCount: number;
   comments: string[];
+  title?: string;
+  rarity?: Rarity;
+};
+
+const RARITY_LABEL: Record<Rarity, string> = {
+  common: '일반',
+  rare: '희귀',
+  epic: '영웅',
+  legendary: '전설'
+};
+
+const RARITY_COLOR: Record<Rarity, string> = {
+  common: '#94A3B8',
+  rare: '#60A5FA',
+  epic: '#C084FC',
+  legendary: '#FFE066'
 };
 
 type ResultPayload = {
@@ -110,13 +128,33 @@ export default function EvaluationResultPage({ params }: { params: { matchId: st
             const team = teamMap.get(row.userId);
             return (
               <li key={row.userId} className={`pc-result-item${isMine ? ' is-mine' : ''}${isMvp ? ' is-mvp' : ''}`}>
-                <strong>
-                  {row.rank}위 {row.displayName}
-                  {team ? ` (${team === 'red' ? 'Red' : 'Blue'})` : ''}
-                </strong>{' '}
-                / 종합 {row.overall}
-                {isMvp ? ' / MVP' : ''}
-                {isMine ? ' / 내 점수' : ''}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                  <strong>
+                    {row.rank}위 {row.displayName}
+                    {team ? ` (${team === 'red' ? 'Red' : 'Blue'})` : ''}
+                  </strong>
+                  {row.title ? (
+                    <span
+                      style={{
+                        padding: '3px 10px',
+                        borderRadius: 999,
+                        border: `1px solid ${RARITY_COLOR[row.rarity ?? 'common']}`,
+                        color: RARITY_COLOR[row.rarity ?? 'common'],
+                        background: 'rgba(255,255,255,0.04)',
+                        fontSize: 11,
+                        fontWeight: 800,
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      ⚡ {row.title} · {RARITY_LABEL[row.rarity ?? 'common']}
+                    </span>
+                  ) : null}
+                </div>
+                <div style={{ marginTop: 4 }}>
+                  종합 <strong>{row.overall}</strong>
+                  {isMvp ? ' · MVP' : ''}
+                  {isMine ? ' · 내 점수' : ''}
+                </div>
                 <div style={{ marginTop: 4 }}>항목: {row.metricStats.map((metric) => `${metric.metricKey} ${metric.avg}`).join(', ') || '-'}</div>
                 <div>결장: {row.absences.join(', ') || '-'}</div>
                 <div>코멘트: {row.comments.join(' | ') || '-'}</div>

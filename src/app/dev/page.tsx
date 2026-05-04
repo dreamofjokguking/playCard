@@ -16,6 +16,8 @@ export default function DevToolsPage() {
   const [running, setRunning] = useState(false);
   const [message, setMessage] = useState('');
   const [sessionUserId, setSessionUserId] = useState<string | null>(null);
+  const [meRole, setMeRole] = useState<string | null>(null);
+  const [meKakaoId, setMeKakaoId] = useState<string | null>(null);
 
   async function refreshSession() {
     try {
@@ -24,6 +26,36 @@ export default function DevToolsPage() {
       setSessionUserId(json.data?.userId ?? null);
     } catch {
       setSessionUserId(null);
+    }
+    try {
+      const res = await fetch('/api/auth/me', { cache: 'no-store' });
+      if (!res.ok) {
+        setMeRole(null);
+        setMeKakaoId(null);
+        return;
+      }
+      const json = (await res.json()) as { success: boolean; data?: { role?: string; actorId?: string } };
+      setMeRole(json.data?.role ?? null);
+      setMeKakaoId(json.data?.actorId ?? null);
+    } catch {
+      setMeRole(null);
+      setMeKakaoId(null);
+    }
+  }
+
+  async function promoteToServiceAdmin() {
+    setMessage('');
+    try {
+      const res = await fetch('/api/dev/promote', { method: 'POST' });
+      const json = (await res.json()) as { success: boolean; data?: { role: string }; message?: string };
+      if (!res.ok || !json.success) {
+        setMessage(json.message || '승격 실패');
+        return;
+      }
+      setMessage(`현재 사용자가 ${json.data?.role}로 승격되었습니다. 새로고침하면 메뉴에 "관리"가 노출됩니다.`);
+      await refreshSession();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : '요청 실패');
     }
   }
 
@@ -92,7 +124,21 @@ export default function DevToolsPage() {
 
       <section className="card">
         <h2>현재 세션</h2>
-        <p className="pc-meta">userId: {sessionUserId || '(로그인 안 됨)'}</p>
+        <p className="pc-meta">
+          session userId: {sessionUserId || '(로그인 안 됨)'}
+        </p>
+        <p className="pc-meta">
+          actor: {meKakaoId || '(없음)'} · role: <strong>{meRole || '(없음)'}</strong>
+          {meRole === 'service_admin' ? ' ✅' : null}
+        </p>
+        <div className="pc-row" style={{ marginTop: 8 }}>
+          <button type="button" className="pc-button" onClick={() => promoteToServiceAdmin()}>
+            현재 사용자를 service_admin으로 승격
+          </button>
+          <button type="button" className="pc-button" onClick={() => refreshSession()}>
+            권한 재조회
+          </button>
+        </div>
         <div className="pc-row" style={{ marginTop: 8 }}>
           <Link href="/" className="pc-pill is-active">/ (홈 · 클럽 선택)</Link>
           {summary?.clubRoomId ? (

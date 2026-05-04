@@ -1,7 +1,10 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useParams } from 'next/navigation';
 import RankRow from '@/components/ui/RankRow';
+
+type Rarity = 'common' | 'rare' | 'epic' | 'legendary';
 
 type RankingRow = {
   rank: number;
@@ -11,7 +14,16 @@ type RankingRow = {
   score: number;
   mvpCount: number;
   matchCount: number;
-  previousRank?: number | null;
+  previousRank: number | null;
+  title: string;
+  rarity: Rarity;
+};
+
+type MatchOption = {
+  _id: string;
+  date: string;
+  time: string;
+  venue?: string;
 };
 
 const tabs = [
@@ -21,17 +33,41 @@ const tabs = [
   { key: 'pass', label: '패스' }
 ];
 
+const SEASON_ALL = '__season__';
+
 export default function RankingPage() {
+  const routeParams = useParams<{ id: string }>();
+  const clubRoomId = routeParams.id;
   const [tab, setTab] = useState('overall');
   const [rows, setRows] = useState<RankingRow[]>([]);
+  const [matches, setMatches] = useState<MatchOption[]>([]);
+  const [matchId, setMatchId] = useState<string>(SEASON_ALL);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
+
+  // 매치 목록 1회 로드
+  useEffect(() => {
+    let active = true;
+    fetch(`/api/club-rooms/${encodeURIComponent(clubRoomId)}/matches`, { cache: 'no-store' })
+      .then((res) => res.json())
+      .then((json: { success: boolean; data?: MatchOption[] }) => {
+        if (active && json.success) setMatches(json.data ?? []);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [clubRoomId]);
 
   async function load() {
     setLoading(true);
     setMessage('');
     try {
-      const res = await fetch(`/api/rankings?type=${encodeURIComponent(tab)}`, { cache: 'no-store' });
+      const search = new URLSearchParams();
+      search.set('type', tab);
+      search.set('clubRoomId', clubRoomId);
+      if (matchId !== SEASON_ALL) search.set('matchId', matchId);
+      const res = await fetch(`/api/rankings?${search.toString()}`, { cache: 'no-store' });
       const json = (await res.json()) as { success: boolean; data?: RankingRow[]; message?: string };
       if (!res.ok || !json.success || !json.data) {
         setMessage(json.message || '순위를 불러오지 못했습니다.');
@@ -47,18 +83,44 @@ export default function RankingPage() {
 
   useEffect(() => {
     load().catch(() => setMessage('순위를 불러오지 못했습니다.'));
-  }, [tab]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, matchId, clubRoomId]);
 
   const podium = useMemo(() => rows.slice(0, 3), [rows]);
+  const isMatchScope = matchId !== SEASON_ALL;
 
   return (
     <>
       <section className="card">
         <h1>순위</h1>
-        <p>시즌 누적 점수와 포지션별 랭킹을 확인하세요.</p>
+        <p>{isMatchScope ? '선택한 경기의 순위와 그 경기에 부여된 칭호' : '시즌 누적 점수와 현재 칭호'}를 확인하세요.</p>
+
+        <label style={{ display: 'block', marginTop: 10 }}>
+          <span className="pc-meta">기준 경기</span>
+          <select
+            className="pc-field"
+            value={matchId}
+            onChange={(event) => setMatchId(event.target.value)}
+            style={{ marginTop: 6 }}
+          >
+            <option value={SEASON_ALL}>시즌 누적 (전체 완료 경기)</option>
+            {matches.map((match) => (
+              <option key={match._id} value={match._id}>
+                {String(match.date).slice(0, 10)} {match.time}
+                {match.venue ? ` · ${match.venue}` : ''}
+              </option>
+            ))}
+          </select>
+        </label>
+
         <div className="pc-pill-row">
           {tabs.map((item) => (
-            <button key={item.key} type="button" className={`pc-pill${tab === item.key ? ' is-active' : ''}`} onClick={() => setTab(item.key)}>
+            <button
+              key={item.key}
+              type="button"
+              className={`pc-pill${tab === item.key ? ' is-active' : ''}`}
+              onClick={() => setTab(item.key)}
+            >
               {item.label}
             </button>
           ))}
@@ -67,7 +129,9 @@ export default function RankingPage() {
 
       {podium.length > 0 ? (
         <section className="pc-podium">
-          <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '.08em', color: 'var(--pc-accent)' }}>SEASON PODIUM</div>
+          <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '.08em', color: 'var(--pc-accent)' }}>
+            {isMatchScope ? 'MATCH PODIUM' : 'SEASON PODIUM'}
+          </div>
           <div className="pc-podium-stand">
             {[podium[1], podium[0], podium[2]].map((row, index) => {
               if (!row) return null;
@@ -94,7 +158,7 @@ export default function RankingPage() {
       ) : null}
 
       <section className="card">
-        <h2>전체 랭킹</h2>
+        <h2>{isMatchScope ? '경기 순위' : '전체 랭킹'}</h2>
         {loading ? <p style={{ marginTop: 10 }}>로딩 중...</p> : null}
         {!loading && rows.length === 0 ? <p style={{ marginTop: 10 }}>{message || '데이터가 없습니다.'}</p> : null}
         {!loading && rows.length > 0 ? (
@@ -106,7 +170,9 @@ export default function RankingPage() {
                 name={row.displayName}
                 score={row.score}
                 badge={`MVP ${row.mvpCount}`}
-                previousRank={row.previousRank ?? null}
+                previousRank={row.previousRank}
+                title={row.title || undefined}
+                rarity={row.rarity}
               />
             ))}
           </div>

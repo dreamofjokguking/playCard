@@ -6,6 +6,8 @@ import User from '@/lib/models/User';
 
 export const dynamic = 'force-dynamic';
 
+type Rarity = 'common' | 'rare' | 'epic' | 'legendary';
+
 type RankingRow = {
   userId: string;
   displayName: string;
@@ -14,23 +16,34 @@ type RankingRow = {
   mvpCount: number;
   matchCount: number;
   previousRank: number | null;
+  title: string;
+  rarity: Rarity;
 };
 
-type Totals = { scoreTotal: number; scoreCount: number; mvpCount: number; matchCount: number };
+type Totals = {
+  scoreTotal: number;
+  scoreCount: number;
+  mvpCount: number;
+  matchCount: number;
+  matchTitle: string;
+  matchRarity: Rarity;
+};
 
 function roundScore(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
+type PlayerStat = {
+  userId: string;
+  overall: number;
+  mvpCount?: number;
+  metricStats: Array<{ metricKey: string; avg: number; count: number }>;
+  title?: string;
+  rarity?: Rarity;
+};
+
 type MatchResultsLean = {
-  results?: {
-    playerStats?: Array<{
-      userId: string;
-      overall: number;
-      mvpCount?: number;
-      metricStats: Array<{ metricKey: string; avg: number; count: number }>;
-    }>;
-  };
+  results?: { playerStats?: PlayerStat[] };
 };
 
 function accumulate(matches: MatchResultsLean[], type: string): Map<string, Totals> {
@@ -38,7 +51,14 @@ function accumulate(matches: MatchResultsLean[], type: string): Map<string, Tota
   for (const match of matches) {
     const stats = match.results?.playerStats ?? [];
     for (const row of stats) {
-      const current = totals.get(row.userId) ?? { scoreTotal: 0, scoreCount: 0, mvpCount: 0, matchCount: 0 };
+      const current = totals.get(row.userId) ?? {
+        scoreTotal: 0,
+        scoreCount: 0,
+        mvpCount: 0,
+        matchCount: 0,
+        matchTitle: '',
+        matchRarity: 'common' as Rarity
+      };
       if (type === 'overall') {
         current.scoreTotal += row.overall;
         current.scoreCount += 1;
@@ -51,6 +71,10 @@ function accumulate(matches: MatchResultsLean[], type: string): Map<string, Tota
       }
       current.mvpCount += row.mvpCount ?? 0;
       current.matchCount += 1;
+      if (row.title) {
+        current.matchTitle = row.title;
+        current.matchRarity = (row.rarity ?? 'common') as Rarity;
+      }
       totals.set(row.userId, current);
     }
   }
@@ -81,39 +105,48 @@ async function _GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   const type = searchParams.get('type')?.trim() || 'overall';
+  const clubRoomId = searchParams.get('clubRoomId')?.trim() || '';
+  const matchId = searchParams.get('matchId')?.trim() || '';
 
-  const matches = (await Match.find({ status: 'completed' })
+  const filter: Record<string, unknown> = { status: 'completed' };
+  if (clubRoomId) filter.clubRoomId = clubRoomId;
+  if (matchId) filter._id = matchId;
+
+  const matches = (await Match.find(filter)
     .select({ results: 1, date: 1 })
     .sort({ date: -1 })
     .lean()) as MatchResultsLean[];
 
   const totals = accumulate(matches, type);
-  // 직전 순위 산출 — 최신 1경기를 제외한 누적
-  const previousMatches = matches.slice(1);
-  const previousTotals = accumulate(previousMatches, type);
 
   const candidateUserIds = Array.from(totals.entries())
     .filter(([, value]) => value.scoreCount > 0)
     .map(([userId]) => userId);
 
   const users = await User.find({ _id: { $in: candidateUserIds } })
-    .select({ _id: 1, displayName: 1, nickname: 1, currentTitle: 1 })
+    .select({ _id: 1, displayName: 1, nickname: 1, currentTitle: 1, currentRarity: 1 })
     .lean();
   const userMap = new Map(
     users.map((user) => [
       String(user._id),
       {
         displayName: user.displayName || user.nickname || String(user._id),
-        currentTitle: user.currentTitle || ''
+        currentTitle: user.currentTitle || '',
+        currentRarity: (user.currentRarity || 'common') as Rarity
       }
     ])
   );
   const displayNameMap = new Map(Array.from(userMap.entries()).map(([id, value]) => [id, value.displayName]));
-  const previousRankMap = rankByTotals(previousTotals, displayNameMap);
+
+  // 직전 순위는 시즌 누적 모드에서만 계산 (최신 1경기 제외)
+  const previousRanks = matchId
+    ? new Map<string, number>()
+    : rankByTotals(accumulate(matches.slice(1), type), displayNameMap);
 
   const rankings: RankingRow[] = candidateUserIds.map((userId) => {
     const value = totals.get(userId)!;
     const user = userMap.get(userId);
+    const isMatchScope = Boolean(matchId);
     return {
       userId,
       displayName: user?.displayName ?? userId,
@@ -121,7 +154,9 @@ async function _GET(request: NextRequest) {
       score: value.scoreCount > 0 ? roundScore(value.scoreTotal / value.scoreCount) : 0,
       mvpCount: value.mvpCount,
       matchCount: value.matchCount,
-      previousRank: previousRankMap.get(userId) ?? null
+      previousRank: previousRanks.get(userId) ?? null,
+      title: isMatchScope ? value.matchTitle : user?.currentTitle ?? '',
+      rarity: isMatchScope ? value.matchRarity : user?.currentRarity ?? 'common'
     };
   });
 
