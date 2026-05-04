@@ -12,7 +12,33 @@ type UpdateMatchBody = {
   time?: string;
   date?: string;
   participants?: string[];
+  teamAssignments?: Array<{ userId: string; team: 'red' | 'blue' }>;
 };
+
+async function _GET(request: NextRequest, context: { params: { id: string } }) {
+  await dbConnect();
+
+  const accessResult = await getActorAccess(request);
+  if (!accessResult.ok) {
+    return accessResult.response;
+  }
+  const { access } = accessResult;
+
+  const { id } = context.params;
+  const target = await Match.findById(id).lean();
+  if (!target) {
+    return NextResponse.json({ success: false, message: '경기를 찾을 수 없습니다.' }, { status: 404 });
+  }
+
+  if (!access.isServiceAdmin) {
+    const canManage = await canManageClubRoomById(target.clubRoomId, access.actorId);
+    if (!canManage) {
+      return NextResponse.json({ success: false, message: '클럽 관리 권한이 없습니다.' }, { status: 403 });
+    }
+  }
+
+  return NextResponse.json({ success: true, data: target });
+}
 
 async function _PATCH(request: NextRequest, context: { params: { id: string } }) {
   await dbConnect();
@@ -43,6 +69,7 @@ async function _PATCH(request: NextRequest, context: { params: { id: string } })
     time?: string;
     date?: Date;
     participants?: string[];
+    teamAssignments?: Array<{ userId: string; team: 'red' | 'blue' }>;
   } = {};
 
   if (body.status) {
@@ -64,6 +91,29 @@ async function _PATCH(request: NextRequest, context: { params: { id: string } })
   if (Array.isArray(body.participants)) {
     update.participants = body.participants.map((v) => v.trim()).filter(Boolean);
   }
+  if (Array.isArray(body.teamAssignments)) {
+    const normalized = body.teamAssignments
+      .map((value) => ({
+        userId: value.userId?.trim() ?? '',
+        team: value.team
+      }))
+      .filter((value) => value.userId && (value.team === 'red' || value.team === 'blue'));
+
+    if (normalized.length === 0) {
+      return NextResponse.json({ success: false, message: 'teamAssignments가 비어있습니다.' }, { status: 400 });
+    }
+
+    const participantSet = new Set((update.participants ?? target.participants).map((value) => value.trim()));
+    const hasInvalidUser = normalized.some((value) => !participantSet.has(value.userId));
+    if (hasInvalidUser) {
+      return NextResponse.json(
+        { success: false, message: 'teamAssignments에는 참가자(participants)만 포함할 수 있습니다.' },
+        { status: 400 }
+      );
+    }
+
+    update.teamAssignments = normalized;
+  }
 
   if (Object.keys(update).length === 0) {
     return NextResponse.json({ success: false, message: '수정할 필드가 없습니다.' }, { status: 400 });
@@ -78,3 +128,4 @@ async function _PATCH(request: NextRequest, context: { params: { id: string } })
 }
 
 export const PATCH = withApiLogging(_PATCH, '/api/admin/matches/[id]');
+export const GET = withApiLogging(_GET, '/api/admin/matches/[id]');

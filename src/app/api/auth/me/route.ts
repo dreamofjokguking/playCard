@@ -15,7 +15,12 @@ async function _GET(request: NextRequest) {
     return NextResponse.json({ success: false, message: '로그인이 필요합니다.' }, { status: 401 });
   }
 
-  const user = await User.findById(actorId).lean();
+  const isObjectId = /^[a-fA-F0-9]{24}$/.test(actorId);
+  const user = await User.findOne(
+    isObjectId
+      ? { $or: [{ _id: actorId }, { kakaoId: actorId }] }
+      : { kakaoId: actorId }
+  ).lean();
   if (!user) {
     return NextResponse.json({ success: false, message: '사용자를 찾을 수 없습니다.' }, { status: 404 });
   }

@@ -10,6 +10,7 @@ type MatchRow = {
   time: string;
   venue?: string;
   participants: string[];
+  teamAssignments?: Array<{ userId: string; team: 'red' | 'blue' }>;
   evaluationsSubmitted?: string[];
   status: 'evaluating' | 'completed' | 'cancelled';
 };
@@ -26,6 +27,7 @@ export default function AdminMatchesPage() {
   const [loading, setLoading] = useState(false);
   const [me, setMe] = useState<MeResponse | null>(null);
   const [clubRoomId, setClubRoomId] = useState('');
+  const [copiedMatchId, setCopiedMatchId] = useState('');
 
   const queryString = useMemo(() => {
     if (!clubRoomId.trim()) return '';
@@ -39,7 +41,7 @@ export default function AdminMatchesPage() {
       const res = await fetch(`/api/admin/matches${queryString}`, { cache: 'no-store' });
       const json = (await res.json()) as { success: boolean; message?: string; data?: MatchRow[] };
       if (!res.ok || !json.success || !json.data) {
-        setMessage(json.message || '목록 조회에 실패했습니다.');
+        setMessage(json.message || '경기 목록 조회에 실패했습니다.');
         return;
       }
       setRows(json.data);
@@ -75,6 +77,19 @@ export default function AdminMatchesPage() {
       return;
     }
     await fetchRows();
+  }
+
+  async function copyShareLink(id: string) {
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const link = `${origin}/team-builder?matchId=${encodeURIComponent(id)}&view=share`;
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopiedMatchId(id);
+      setTimeout(() => setCopiedMatchId((prev) => (prev === id ? '' : prev)), 1500);
+      setMessage('공유 링크를 복사했습니다.');
+    } catch {
+      setMessage(`공유 링크: ${link}`);
+    }
   }
 
   useEffect(() => {
@@ -118,33 +133,49 @@ export default function AdminMatchesPage() {
       <section className="card">
         <h2>경기 목록</h2>
         <div className="pc-stack">
-          {rows.map((row) => (
-            <div key={row._id} className="quick-link">
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
-                <strong>
-                  {row.date?.slice(0, 10)} {row.time}
-                </strong>
-                <span className={`pc-status-badge ${row.status === 'completed' ? 'active' : row.status === 'evaluating' ? 'pending' : 'inactive'}`}>
-                  {row.status}
-                </span>
+          {rows.map((row) => {
+            const redCount = (row.teamAssignments ?? []).filter((v) => v.team === 'red').length;
+            const blueCount = (row.teamAssignments ?? []).filter((v) => v.team === 'blue').length;
+            return (
+              <div key={row._id} className="quick-link">
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                  <strong>
+                    {row.date?.slice(0, 10)} {row.time}
+                  </strong>
+                  <span className={`pc-status-badge ${row.status === 'completed' ? 'active' : row.status === 'evaluating' ? 'pending' : 'inactive'}`}>
+                    {row.status}
+                  </span>
+                </div>
+                <div className="pc-meta" style={{ marginTop: 6 }}>
+                  참여 {row.participants.length}명 / 제출 {(row.evaluationsSubmitted ?? []).length}명
+                  {row.teamAssignments?.length ? ` / 팀저장 ${row.teamAssignments.length}명 (R${redCount}:B${blueCount})` : ' / 팀저장 없음'}
+                  {row.venue ? ` / ${row.venue}` : ''}
+                </div>
+                <div className="pc-row" style={{ marginTop: 8 }}>
+                  <Link href={`/team-builder?matchId=${encodeURIComponent(row._id)}`} className="pc-button">
+                    팀구성
+                  </Link>
+                  <button className="pc-button" type="button" onClick={() => copyShareLink(row._id)}>
+                    {copiedMatchId === row._id ? '복사됨' : '공유'}
+                  </button>
+                  {row.status === 'completed' ? (
+                    <Link href={`/evaluation/${encodeURIComponent(row._id)}/result`} className="pc-button">
+                      결과
+                    </Link>
+                  ) : null}
+                  <button className="pc-button" type="button" onClick={() => changeStatus(row._id, 'evaluating')}>
+                    진행중
+                  </button>
+                  <button className="pc-button" type="button" onClick={() => changeStatus(row._id, 'completed')}>
+                    완료
+                  </button>
+                  <button className="pc-button" type="button" onClick={() => changeStatus(row._id, 'cancelled')}>
+                    취소
+                  </button>
+                </div>
               </div>
-              <div className="pc-meta" style={{ marginTop: 6 }}>
-                참여 {row.participants.length}명 / 제출 {(row.evaluationsSubmitted ?? []).length}명
-                {row.venue ? ` / ${row.venue}` : ''}
-              </div>
-              <div className="pc-row" style={{ marginTop: 8 }}>
-                <button className="pc-button" type="button" onClick={() => changeStatus(row._id, 'evaluating')}>
-                  진행중
-                </button>
-                <button className="pc-button" type="button" onClick={() => changeStatus(row._id, 'completed')}>
-                  완료
-                </button>
-                <button className="pc-button" type="button" onClick={() => changeStatus(row._id, 'cancelled')}>
-                  취소
-                </button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
           {rows.length === 0 ? <p>표시할 경기가 없습니다.</p> : null}
         </div>
       </section>

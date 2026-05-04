@@ -22,7 +22,12 @@ export async function getActorAccess(request: NextRequest): Promise<
     };
   }
 
-  const actor = await User.findById(actorId).lean();
+  const isObjectId = /^[a-fA-F0-9]{24}$/.test(actorId);
+  const actor = await User.findOne(
+    isObjectId
+      ? { $or: [{ _id: actorId }, { kakaoId: actorId }] }
+      : { kakaoId: actorId }
+  ).lean();
   if (!actor) {
     return {
       ok: false,

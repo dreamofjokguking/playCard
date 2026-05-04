@@ -53,7 +53,8 @@ async function _GET(request: NextRequest, context: { params: { id: string } }) {
         _id: String(match._id),
         date: match.date,
         time: match.time,
-        venue: match.venue
+        venue: match.venue,
+        teamAssignments: match.teamAssignments ?? []
       },
       mvpUserId: mvpUserId ?? '',
       playerStats: sorted.map((row, index) => ({

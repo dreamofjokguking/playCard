@@ -25,6 +25,7 @@ type CurrentEvaluationResponse = {
   match: {
     _id: string;
     participants: string[];
+    teamAssignments?: Array<{ userId: string; team: 'red' | 'blue' }>;
     evaluationsSubmitted: string[];
   };
   metrics: Metric[];
@@ -67,6 +68,40 @@ export default function EvaluationPage() {
     for (const row of payload.positionSubmissions) map.set(row.userId, row.selectedMetrics);
     return map;
   }, [payload]);
+
+  const teamMap = useMemo(() => {
+    const map = new Map<string, 'red' | 'blue'>();
+    if (!payload) return map;
+    for (const row of payload.match.teamAssignments ?? []) map.set(row.userId, row.team);
+    return map;
+  }, [payload]);
+
+  const actorTeam = useMemo(() => {
+    if (!payload) return null;
+    return teamMap.get(payload.actorId) ?? null;
+  }, [payload, teamMap]);
+
+  const groupedTargets = useMemo(() => {
+    const mine: Participant[] = [];
+    const opponent: Participant[] = [];
+    const unknown: Participant[] = [];
+    for (const participant of targetParticipants) {
+      const team = teamMap.get(participant._id);
+      if (!actorTeam || !team) {
+        unknown.push(participant);
+      } else if (team === actorTeam) {
+        mine.push(participant);
+      } else {
+        opponent.push(participant);
+      }
+    }
+    return { mine, opponent, unknown };
+  }, [targetParticipants, teamMap, actorTeam]);
+
+  const mvpCandidates = useMemo(
+    () => [...groupedTargets.opponent, ...groupedTargets.mine, ...groupedTargets.unknown],
+    [groupedTargets]
+  );
 
   const submittedCount = payload?.match.evaluationsSubmitted.length ?? 0;
   const totalCount = payload?.match.participants.length ?? 0;
@@ -268,13 +303,29 @@ export default function EvaluationPage() {
       {isEvaluationReady ? (
         <section className="card">
           <h2>3단계 · 참여자 평가</h2>
+          {actorTeam ? (
+            <p className="pc-meta" style={{ marginBottom: 8 }}>
+              내 팀: {actorTeam === 'red' ? 'Red' : 'Blue'}
+            </p>
+          ) : null}
           <div className="pc-stack">
-            {targetParticipants.map((participant) => {
+            {[...groupedTargets.opponent, ...groupedTargets.mine, ...groupedTargets.unknown].map((participant) => {
               const rating = ratings.find((row) => row.targetUserId === participant._id);
               if (!rating) return null;
+              const participantTeam = teamMap.get(participant._id);
+              const relation =
+                actorTeam && participantTeam
+                  ? participantTeam === actorTeam
+                    ? '내 팀'
+                    : '상대 팀'
+                  : '팀 미분류';
               return (
                 <article key={participant._id} className="pc-result-item">
-                  <strong>{participant.displayName}</strong>
+                  <strong>
+                    {participant.displayName}
+                    {teamMap.get(participant._id) ? ` (${teamMap.get(participant._id) === 'red' ? 'Red' : 'Blue'})` : ''}
+                  </strong>
+                  <div className="pc-meta">{relation}</div>
                   <div className="pc-meta">제출 포지션: {(positionMap.get(participant._id) ?? []).join(', ') || '-'}</div>
                   <div className="pc-stack">
                     {rating.metricScores.map((metric) => (
@@ -310,13 +361,21 @@ export default function EvaluationPage() {
               MVP 선택
               <select value={mvpPick} onChange={(event) => setMvpPick(event.target.value)} className="pc-button" style={{ width: '100%', marginTop: 6 }}>
                 <option value="">선택</option>
-                {payload.participants
-                  .filter((participant) => participant._id !== payload.actorId)
-                  .map((participant) => (
+                {mvpCandidates.map((participant) => {
+                  const participantTeam = teamMap.get(participant._id);
+                  const relation =
+                    actorTeam && participantTeam
+                      ? participantTeam === actorTeam
+                        ? '내팀'
+                        : '상대팀'
+                      : '미분류';
+                  const teamLabel = participantTeam ? (participantTeam === 'red' ? 'Red' : 'Blue') : '-';
+                  return (
                     <option key={participant._id} value={participant._id}>
-                      {participant.displayName}
+                      {participant.displayName} ({relation}/{teamLabel})
                     </option>
-                  ))}
+                  );
+                })}
               </select>
             </label>
           </div>
