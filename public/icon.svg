@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="PlayCard">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1C2030" />
+      <stop offset="1" stop-color="#0E1018" />
+    </linearGradient>
+    <linearGradient id="card" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFC04D" />
+      <stop offset="1" stop-color="#FF8A1F" />
+    </linearGradient>
+    <linearGradient id="bolt" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFE066" />
+      <stop offset="1" stop-color="#FFB020" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="96" fill="url(#bg)" />
+  <g transform="translate(118 92)">
+    <rect x="20" y="32" width="240" height="320" rx="36" fill="url(#card)" stroke="#FFE066" stroke-width="6" />
+    <rect x="0" y="0" width="240" height="320" rx="36" fill="url(#card)" stroke="#FFE066" stroke-width="8" transform="rotate(-8 120 160)" />
+    <path d="M118 78 L96 198 L138 188 L114 286 L172 154 L130 162 L154 78 Z" fill="url(#bolt)" stroke="#1A1206" stroke-width="3" stroke-linejoin="round" />
+  </g>
+</svg>

@@ -1,0 +1,22 @@
+{
+  "name": "PlayCard",
+  "short_name": "PlayCard",
+  "description": "스포츠 동호회 통합 운영 플랫폼 — 평가, 순위, 칭호, 팀 구성을 한 화면에",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0E1018",
+  "theme_color": "#FFB020",
+  "lang": "ko",
+  "dir": "ltr",
+  "categories": ["sports", "social", "productivity"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
