@@ -37,6 +37,11 @@ type MatchByIdResponse = {
   teamAssignments?: Array<{ userId: string; team: 'red' | 'blue' }>;
 };
 
+type RankingRow = {
+  userId: string;
+  score: number;
+};
+
 function TeamBuilderContent() {
   const searchParams = useSearchParams();
   const [rows, setRows] = useState<Array<{ _id: string; displayName: string }>>([]);
@@ -47,6 +52,7 @@ function TeamBuilderContent() {
   const [mode, setMode] = useState<'auto' | 'manual'>('auto');
   const [matchId, setMatchId] = useState('');
   const [saving, setSaving] = useState(false);
+  const [balancing, setBalancing] = useState(false);
 
   const isShareView = searchParams.get('view') === 'share';
 
@@ -194,6 +200,51 @@ function TeamBuilderContent() {
     setSaving(false);
   }
 
+  async function autoBalanceByRanking() {
+    if (rows.length === 0) return;
+    setBalancing(true);
+    setErrorMessage('');
+    try {
+      const res = await fetch('/api/rankings?type=overall', { cache: 'no-store' });
+      const json = await parseJsonSafe<{ success: boolean; data?: RankingRow[]; message?: string }>(res);
+      if (!res.ok || !json?.success || !json.data) {
+        setErrorMessage(json?.message || '랭킹 데이터를 불러오지 못했습니다.');
+        return;
+      }
+
+      const scoreMap = new Map(json.data.map((row) => [row.userId, row.score]));
+      const sorted = [...rows]
+        .map((row) => ({ ...row, score: scoreMap.get(row._id) ?? 5 }))
+        .sort((a, b) => b.score - a.score);
+
+      // Greedy balancing: always assign next highest to the currently lower-sum team.
+      let redSum = 0;
+      let blueSum = 0;
+      const next: Record<string, 'red' | 'blue'> = {};
+      for (const player of sorted) {
+        if (redSum <= blueSum) {
+          next[player._id] = 'red';
+          redSum += player.score;
+        } else {
+          next[player._id] = 'blue';
+          blueSum += player.score;
+        }
+      }
+
+      setManualAssignments(next);
+      setNoticeMessage(`실력기반 자동편성 완료 (레드 ${redSum.toFixed(1)} / 블루 ${blueSum.toFixed(1)})`);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : '실력기반 자동편성에 실패했습니다.');
+    } finally {
+      setBalancing(false);
+    }
+  }
+
+  function resetRoundRobin() {
+    setManualAssignments(makeInitialAssignments(rows));
+    setNoticeMessage('기본 교차 배치로 초기화했습니다.');
+  }
+
   function swapAssignment(memberId: string) {
     if (isShareView) return;
     setManualAssignments((prev) => ({
@@ -222,6 +273,16 @@ function TeamBuilderContent() {
     return { red, blue };
   }, [rows, manualAssignments]);
 
+  const teamScore = useMemo(() => {
+    const red = teams.red.length;
+    const blue = teams.blue.length;
+    return {
+      redCount: red,
+      blueCount: blue,
+      diffCount: Math.abs(red - blue)
+    };
+  }, [teams]);
+
   return (
     <>
       <section className="card">
@@ -241,6 +302,16 @@ function TeamBuilderContent() {
             수동 편성
           </button>
         </div>
+        {!isShareView ? (
+          <div className="pc-row" style={{ marginTop: 10 }}>
+            <button className="pc-button" type="button" onClick={() => autoBalanceByRanking()} disabled={balancing || rows.length === 0}>
+              {balancing ? '자동편성 계산 중...' : '실력기반 자동편성'}
+            </button>
+            <button className="pc-button" type="button" onClick={() => resetRoundRobin()} disabled={rows.length === 0}>
+              기본 교차 배치
+            </button>
+          </div>
+        ) : null}
         {!isShareView ? (
           <div className="pc-row" style={{ marginTop: 10 }}>
             <button className="pc-button pc-button-primary" type="button" onClick={() => saveTeamAssignments()} disabled={!matchId || saving}>
@@ -285,6 +356,10 @@ function TeamBuilderContent() {
                 <strong>블루팀</strong>
                 <div className="pc-meta" style={{ marginTop: 6 }}>{teams.blue.join(', ') || '-'}</div>
               </div>
+            </div>
+            <div className="pc-meta" style={{ marginTop: 10 }}>
+              인원 밸런스: 레드 {teamScore.redCount}명 / 블루 {teamScore.blueCount}명
+              {teamScore.diffCount > 0 ? ` (차이 ${teamScore.diffCount}명)` : ' (균형)'}
             </div>
           </>
         ) : null}
