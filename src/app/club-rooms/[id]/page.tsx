@@ -287,10 +287,10 @@ export default function ClubRoomMainPage({ params }: { params: { id: string } })
               const height = rank === 1 ? 84 : rank === 2 ? 62 : 48;
               const bg =
                 rank === 1
-                  ? 'linear-gradient(180deg,#ffe066,#f0a020)'
+                  ? 'linear-gradient(180deg, var(--pc-accent), var(--pc-accent-deep))'
                   : rank === 2
-                    ? 'linear-gradient(180deg,#94a3b8,#475569)'
-                    : 'linear-gradient(180deg,#f59e0b,#7c2d12)';
+                    ? 'linear-gradient(180deg, var(--pc-podium-silver), #475569)'
+                    : 'linear-gradient(180deg, #f59e0b, var(--pc-podium-bronze))';
               return (
                 <div className="pc-podium-col" key={`${row.userId}-${index}`}>
                   <div className="pc-podium-name">{row.displayName}</div>
