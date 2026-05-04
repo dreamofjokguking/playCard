@@ -31,6 +31,11 @@ vi.mock('@/lib/models/Evaluation', () => ({
   default: { create, find }
 }));
 
+const findClubRoom = vi.fn();
+vi.mock('@/lib/models/ClubRoom', () => ({
+  default: { findById: findClubRoom }
+}));
+
 const { POST } = await import('./route');
 
 describe('/api/evaluations', () => {
@@ -185,8 +190,13 @@ describe('/api/evaluations', () => {
       .mockReturnValueOnce({
         lean: vi.fn().mockResolvedValue({
           _id: 'm1',
+          clubRoomId: 'room-1',
           participants: ['u1', 'u2'],
-          evaluationsSubmitted: ['u1', 'u2']
+          evaluationsSubmitted: ['u1', 'u2'],
+          positionSubmissions: [
+            { userId: 'u1', selectedMetrics: ['attack'] },
+            { userId: 'u2', selectedMetrics: ['attack'] }
+          ]
         })
       })
       .mockResolvedValueOnce({});
@@ -205,6 +215,16 @@ describe('/api/evaluations', () => {
             ]
           }
         ])
+      })
+    });
+    findClubRoom.mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        lean: vi.fn().mockResolvedValue({
+          positionMetrics: [
+            { key: 'attack', isActive: true },
+            { key: 'defense', isActive: true }
+          ]
+        })
       })
     });
 
@@ -237,5 +257,10 @@ describe('/api/evaluations', () => {
         })
       })
     );
+
+    // u2는 attack만 선언했으므로 defense는 자동 결장
+    const persistedResults = (findByIdAndUpdate.mock.calls[1][1] as { results: { playerStats: Array<{ userId: string; absences: string[] }> } }).results;
+    const u2Stats = persistedResults.playerStats.find((row) => row.userId === 'u2');
+    expect(u2Stats?.absences).toEqual(['defense']);
   });
 });

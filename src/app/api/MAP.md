@@ -26,6 +26,7 @@
 | Notifications | `/api/notifications` | `notifications/route.ts` (GET) |
 | Notifications Read | `/api/notifications/read` | `notifications/read/route.ts` (PATCH) |
 | User Dashboard | `/api/users/[id]/dashboard` | `users/[id]/dashboard/route.ts` (GET) |
+| Dev Seed (dev only) | `/api/dev/seed` | `dev/seed/route.ts` (POST) — `NODE_ENV !== 'production'` 일 때만 동작. ClubRoom/User/Match 시드 생성 후 자동 로그인 쿠키 세팅 |
 
 ## 도메인별 MAP
 
