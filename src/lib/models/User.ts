@@ -20,12 +20,22 @@ const UserSchema = new Schema(
     },
     profileImage: { type: String, trim: true, default: '' },
     currentTitle: { type: String, trim: true, default: '' },
+    currentRarity: {
+      type: String,
+      enum: ['common', 'rare', 'epic', 'legendary'],
+      default: 'common'
+    },
     titleHistory: {
       type: [
         new Schema(
           {
             title: { type: String, required: true, trim: true },
             matchId: { type: String, required: true, trim: true },
+            rarity: {
+              type: String,
+              enum: ['common', 'rare', 'epic', 'legendary'],
+              default: 'common'
+            },
             createdAt: { type: Date, required: true, default: Date.now }
           },
           { _id: false }

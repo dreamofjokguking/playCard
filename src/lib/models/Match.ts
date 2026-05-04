@@ -76,7 +76,13 @@ const MatchSchema = new Schema(
                   overall: { type: Number, required: true, default: 0 },
                   absences: { type: [String], default: [] },
                   mvpCount: { type: Number, required: true, default: 0 },
-                  comments: { type: [String], default: [] }
+                  comments: { type: [String], default: [] },
+                  title: { type: String, default: '' },
+                  rarity: {
+                    type: String,
+                    enum: ['common', 'rare', 'epic', 'legendary'],
+                    default: 'common'
+                  }
                 },
                 { _id: false }
               )

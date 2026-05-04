@@ -102,12 +102,18 @@ export type NavigationItem = {
   mobileVisible: boolean;
 };
 
-export function getOutsideClubNav(): NavigationItem[] {
-  return [
+export type OutsideNavOptions = { isServiceAdmin?: boolean };
+
+export function getOutsideClubNav(options: OutsideNavOptions = {}): NavigationItem[] {
+  const items: NavigationItem[] = [
     { href: '/', label: '내 클럽', icon: FolderIcon, mobileVisible: true },
     { href: '/club-rooms/search', label: '클럽 검색', icon: SearchIcon, mobileVisible: true },
     { href: '/club-rooms/new', label: '클럽 생성', icon: PlusCircleIcon, mobileVisible: true }
   ];
+  if (options.isServiceAdmin) {
+    items.push({ href: '/admin', label: '관리', icon: SettingsIcon, mobileVisible: true });
+  }
+  return items;
 }
 
 export function getClubContextNav(clubRoomId: string): NavigationItem[] {

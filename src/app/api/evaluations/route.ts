@@ -5,7 +5,9 @@ import { getActorIdFromSession } from '@/lib/authSession';
 import Match from '@/lib/models/Match';
 import Evaluation from '@/lib/models/Evaluation';
 import ClubRoom from '@/lib/models/ClubRoom';
+import User from '@/lib/models/User';
 import { broadcastNotification } from '@/lib/notifications';
+import { generateTitle, isGeminiEnabled, loadAiSettings, type TitleRarity } from '@/lib/gemini';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,6 +42,8 @@ type AggregatedPlayerStat = {
   absences: string[];
   mvpCount: number;
   comments: string[];
+  title?: string;
+  rarity?: TitleRarity;
 };
 
 function roundScore(value: number): number {
@@ -270,6 +274,56 @@ async function _POST(request: NextRequest) {
         activeMetricKeys,
         declaredMetricsByUser
       });
+
+      // AI 칭호 생성 (Gemini 활성화 시) — 참여자별 병렬 호출
+      if (isGeminiEnabled() && results.playerStats.length > 0) {
+        const userIds = results.playerStats.map((stat) => stat.userId);
+        const users = await User.find({ _id: { $in: userIds } })
+          .select({ _id: 1, displayName: 1, nickname: 1 })
+          .lean();
+        const nameMap = new Map(
+          users.map((user) => [String(user._id), user.displayName || user.nickname || String(user._id)])
+        );
+        const settings = await loadAiSettings();
+
+        const titled = await Promise.all(
+          results.playerStats.map(async (stat) => {
+            const displayName = nameMap.get(stat.userId) ?? stat.userId;
+            const generated = await generateTitle(
+              {
+                displayName,
+                comments: stat.comments,
+                metricStats: stat.metricStats.map((metric) => ({ metricKey: metric.metricKey, avg: metric.avg }))
+              },
+              settings
+            );
+            if (!generated) return stat;
+            return { ...stat, title: generated.title, rarity: generated.rarity };
+          })
+        );
+        results.playerStats = titled;
+
+        // User 갱신 — currentTitle, currentRarity, titleHistory push
+        await Promise.all(
+          titled
+            .filter((stat) => stat.title)
+            .map((stat) =>
+              User.findByIdAndUpdate(stat.userId, {
+                currentTitle: stat.title,
+                currentRarity: stat.rarity ?? 'common',
+                $push: {
+                  titleHistory: {
+                    title: stat.title,
+                    matchId: String(updatedMatch._id),
+                    rarity: stat.rarity ?? 'common',
+                    createdAt: new Date()
+                  }
+                }
+              })
+            )
+        );
+      }
+
       await Match.findByIdAndUpdate(matchId, {
         status: 'completed',
         results

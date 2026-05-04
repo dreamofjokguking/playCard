@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "npx --yes kill-port 3000 && next dev -p 3000",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -11,6 +11,7 @@
     "test:run": "vitest run"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "cloudinary": "^2.10.0",
     "express": "^5.2.1",
     "mongoose": "^8.14.2",

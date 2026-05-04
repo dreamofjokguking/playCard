@@ -1,11 +1,15 @@
 import { rankDelta, type DeltaDirection } from './chartUtils';
 
+type Rarity = 'common' | 'rare' | 'epic' | 'legendary';
+
 type RankRowProps = {
   rank: number;
   name: string;
   score: number;
   badge: string;
   previousRank?: number | null;
+  title?: string;
+  rarity?: Rarity;
 };
 
 const directionColor: Record<DeltaDirection, string> = {
@@ -20,10 +24,26 @@ const directionGlyph: Record<DeltaDirection, string> = {
   flat: '−'
 };
 
-export default function RankRow({ rank, name, score, badge, previousRank = null }: RankRowProps) {
+const RARITY_COLOR: Record<Rarity, string> = {
+  common: '#94A3B8',
+  rare: '#60A5FA',
+  epic: '#C084FC',
+  legendary: '#FFE066'
+};
+
+export default function RankRow({
+  rank,
+  name,
+  score,
+  badge,
+  previousRank = null,
+  title,
+  rarity = 'common'
+}: RankRowProps) {
   const isTop = rank === 1;
   const delta = rankDelta(rank, previousRank);
   const deltaText = delta.direction === 'flat' ? directionGlyph.flat : `${directionGlyph[delta.direction]} ${delta.amount}`;
+  const titleColor = RARITY_COLOR[rarity];
 
   return (
     <div
@@ -33,33 +53,58 @@ export default function RankRow({ rank, name, score, badge, previousRank = null 
         padding: 12,
         background: isTop ? 'rgba(255, 224, 102, 0.12)' : '#262b40',
         display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        gap: 8
+        flexDirection: 'column',
+        gap: 6
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-        <strong style={{ minWidth: 28 }}>{rank}위</strong>
-        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
-        <span
-          aria-label={`순위 변동 ${delta.direction === 'up' ? '상승' : delta.direction === 'down' ? '하락' : '유지'}`}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+          <strong style={{ minWidth: 28 }}>{rank}위</strong>
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
+          <span
+            aria-label={`순위 변동 ${delta.direction === 'up' ? '상승' : delta.direction === 'down' ? '하락' : '유지'}`}
+            style={{
+              fontSize: 11,
+              fontWeight: 800,
+              color: directionColor[delta.direction],
+              background: 'rgba(255, 255, 255, 0.04)',
+              border: `1px solid ${directionColor[delta.direction]}`,
+              padding: '1px 6px',
+              borderRadius: 999,
+              whiteSpace: 'nowrap'
+            }}
+          >
+            {deltaText}
+          </span>
+        </div>
+        <div style={{ fontWeight: 700, whiteSpace: 'nowrap' }}>
+          {score} / <span style={{ color: 'var(--pc-muted)' }}>{badge}</span>
+        </div>
+      </div>
+      {title ? (
+        <div
           style={{
+            display: 'inline-flex',
+            alignSelf: 'flex-start',
+            alignItems: 'center',
+            gap: 6,
+            padding: '2px 8px',
+            border: `1px solid ${titleColor}`,
+            borderRadius: 999,
+            background: 'rgba(255, 255, 255, 0.04)',
+            color: titleColor,
             fontSize: 11,
             fontWeight: 800,
-            color: directionColor[delta.direction],
-            background: 'rgba(255, 255, 255, 0.04)',
-            border: `1px solid ${directionColor[delta.direction]}`,
-            padding: '1px 6px',
-            borderRadius: 999,
-            whiteSpace: 'nowrap'
+            maxWidth: '100%',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis'
           }}
+          title={title}
         >
-          {deltaText}
-        </span>
-      </div>
-      <div style={{ fontWeight: 700, whiteSpace: 'nowrap' }}>
-        {score} / <span style={{ color: 'var(--pc-muted)' }}>{badge}</span>
-      </div>
+          ⚡ {title}
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -43,6 +43,21 @@ export async function getActorAccess(request: NextRequest): Promise<
   };
 }
 
+export async function requireServiceAdmin(request: NextRequest): Promise<
+  | { ok: false; response: NextResponse }
+  | { ok: true; access: ActorAccess }
+> {
+  const result = await getActorAccess(request);
+  if (!result.ok) return result;
+  if (result.access.role !== 'service_admin') {
+    return {
+      ok: false,
+      response: NextResponse.json({ success: false, message: '서비스 관리자 권한이 필요합니다.' }, { status: 403 })
+    };
+  }
+  return result;
+}
+
 export async function canManageClubRoomById(clubRoomId: string, actorId: string): Promise<boolean> {
   const room = await ClubRoom.findById(clubRoomId).lean();
   if (!room) {

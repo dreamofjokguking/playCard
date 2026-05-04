@@ -5,6 +5,8 @@ import { SESSION_COOKIE_NAME } from '@/lib/authSession';
 import ClubRoom from '@/lib/models/ClubRoom';
 import User from '@/lib/models/User';
 import Match from '@/lib/models/Match';
+import Evaluation from '@/lib/models/Evaluation';
+import AiSettings, { DEFAULT_AI_MODEL, DEFAULT_AI_TITLE_PROMPT } from '@/lib/models/AiSettings';
 
 export const dynamic = 'force-dynamic';
 
@@ -59,10 +61,18 @@ async function _POST(request: NextRequest) {
   const existingClubRoom = await ClubRoom.findOne({ name: SEED_TAG }).lean();
   if (existingClubRoom) {
     const oldClubRoomId = String(existingClubRoom._id);
+    await Evaluation.deleteMany({ clubRoomId: oldClubRoomId });
     await Match.deleteMany({ clubRoomId: oldClubRoomId });
     await User.deleteMany({ clubRoomId: oldClubRoomId });
     await ClubRoom.deleteOne({ _id: existingClubRoom._id });
   }
+
+  // AI 설정도 기본값으로 재적용 (등급 정의 포함된 최신 프롬프트로)
+  await AiSettings.findOneAndUpdate(
+    { scope: 'global' },
+    { $set: { titlePrompt: DEFAULT_AI_TITLE_PROMPT, modelName: DEFAULT_AI_MODEL, updatedBy: 'seed' } },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  );
 
   // ClubRoom 생성
   const clubRoom = await ClubRoom.create({
@@ -79,25 +89,48 @@ async function _POST(request: NextRequest) {
   });
   const clubRoomId = String(clubRoom._id);
 
-  // User 생성 — 첫 1명은 admin, 나머지 member
+  // User 생성 — 첫 1명은 service_admin (서비스 최상위 + 클럽 owner), 두 번째는 admin, 나머지 member
   const userDocs = await Promise.all(
-    PLAYERS.map((player, index) =>
-      User.create({
+    PLAYERS.map((player, index) => {
+      const role = index === 0 ? 'service_admin' : index === 1 ? 'admin' : 'member';
+      return User.create({
         clubRoomId,
         kakaoId: player.kakaoId,
         nickname: player.displayName,
         displayName: player.displayName,
-        role: index === 0 ? 'admin' : 'member',
+        role,
         status: 'active',
         currentTitle: index === 0 ? '오늘의 에이스' : index === 1 ? '벽돌 같은 수비' : ''
-      })
-    )
+      });
+    })
   );
   const userIdMap = new Map(userDocs.map((doc) => [doc.kakaoId, String(doc._id)]));
+
+  // 등급 시뮬레이션 헬퍼 (점수 기반)
+  function pickRarity(overall: number, isMvp: boolean): 'common' | 'rare' | 'epic' | 'legendary' {
+    if (overall >= 8.6 && isMvp) return 'legendary';
+    if (overall >= 8.0) return 'epic';
+    if (overall >= 7.0) return 'rare';
+    return 'common';
+  }
+
+  // 풀: 메트릭 best 기반 sample title (실제로는 Gemini가 생성)
+  const TITLE_POOL_BY_BEST: Record<string, string[]> = {
+    attack: ['블록 분쇄자', '네트의 폭격기', '한 방 결정자', '공격 머신'],
+    defense: ['벽돌 같은 수비', '디그의 수문장', '지지않는 라인', '코트의 방패'],
+    toss: ['손끝의 마법사', '템포 메이커', '코트의 지휘자', '정밀한 손'],
+    serve: ['에이스 발사기', '서브의 칼날', '코트 위 저격수', '한 방 서브']
+  };
+
+  function bestMetricKey(metricStats: Array<{ metricKey: string; avg: number }>): string {
+    return metricStats.reduce((a, b) => (a.avg >= b.avg ? a : b)).metricKey;
+  }
 
   // Match 5경기 생성 (가장 오래된 것부터 → 가장 최근)
   const today = new Date();
   const matchIds: string[] = [];
+  let lastMatchTitleByUser = new Map<string, { title: string; rarity: 'common' | 'rare' | 'epic' | 'legendary'; matchId: string; createdAt: Date }>();
+
   for (let matchIndex = 0; matchIndex < MATCH_OFFSETS.length; matchIndex += 1) {
     const offset = MATCH_OFFSETS[matchIndex];
     const matchDate = new Date(today);
@@ -116,15 +149,29 @@ async function _POST(request: NextRequest) {
         userId,
         metricStats,
         overall,
-        absences: [], // 8명 모두 4메트릭 모두 출전 가정
+        absences: [],
         mvpCount: 0,
-        comments: []
+        comments: [] as string[],
+        title: '',
+        rarity: 'common' as 'common' | 'rare' | 'epic' | 'legendary'
       };
     });
 
     // MVP는 해당 경기에서 overall 가장 높은 사람
     const mvpStat = playerStats.reduce((a, b) => (a.overall > b.overall ? a : b));
     mvpStat.mvpCount = 1;
+
+    // 시뮬레이션 칭호 + 등급 부여
+    for (const stat of playerStats) {
+      const isMvp = stat.userId === mvpStat.userId;
+      const rarity = pickRarity(stat.overall, isMvp);
+      const bestKey = bestMetricKey(stat.metricStats);
+      const pool = TITLE_POOL_BY_BEST[bestKey] ?? ['평범한 활약자'];
+      const title = pool[(matchIndex + Math.floor(stat.overall * 10)) % pool.length];
+      stat.title = title;
+      stat.rarity = rarity;
+      lastMatchTitleByUser.set(stat.userId, { title, rarity, matchId: '', createdAt: matchDate });
+    }
 
     const participants = PLAYERS.map((player) => userIdMap.get(player.kakaoId)!);
     const teamAssignments = participants.map((userId, index) => ({
@@ -151,9 +198,104 @@ async function _POST(request: NextRequest) {
       createdBy: userIdMap.get('seed-pc2-u1')!
     });
     matchIds.push(String(created._id));
+
+    // matchId 갱신 (lastMatchTitleByUser)
+    const createdId = String(created._id);
+    for (const stat of playerStats) {
+      const entry = lastMatchTitleByUser.get(stat.userId);
+      if (entry) entry.matchId = createdId;
+    }
   }
 
+  // User.currentTitle / currentRarity / titleHistory 동기화 (가장 최근 매치의 칭호)
+  await Promise.all(
+    Array.from(lastMatchTitleByUser.entries()).map(async ([userId, entry]) =>
+      User.findByIdAndUpdate(userId, {
+        currentTitle: entry.title,
+        currentRarity: entry.rarity,
+        $push: {
+          titleHistory: {
+            title: entry.title,
+            rarity: entry.rarity,
+            matchId: entry.matchId,
+            createdAt: entry.createdAt
+          }
+        }
+      })
+    )
+  );
+
+  // 추가 매치 1개 — 진행 중(evaluating). 김공격(seed-pc2-u1) 외 7명은 평가 제출 끝.
+  // 김공격이 마지막으로 평가 제출하면 즉시 마감 → 칭호 생성 흐름 검증 가능.
   const adminUserId = userIdMap.get('seed-pc2-u1')!;
+  const todayMatchDate = new Date(today);
+  const evaluatingParticipants = PLAYERS.map((player) => userIdMap.get(player.kakaoId)!);
+  const evaluatingTeamAssignments = evaluatingParticipants.map((userId, index) => ({
+    userId,
+    team: (index % 2 === 0 ? 'red' : 'blue') as 'red' | 'blue'
+  }));
+
+  const evaluatingMatch = await Match.create({
+    clubRoomId,
+    date: todayMatchDate,
+    time: '20:00',
+    venue: '시민체육관 B코트',
+    participants: evaluatingParticipants,
+    teamAssignments: evaluatingTeamAssignments,
+    status: 'evaluating',
+    positionSubmissions: evaluatingParticipants.map((userId) => ({
+      userId,
+      selectedMetrics: METRICS,
+      submittedAt: todayMatchDate
+    })),
+    // 김공격(첫 사용자) 제외 7명은 이미 평가 제출 완료
+    evaluationsSubmitted: evaluatingParticipants.slice(1),
+    mvpVotes: evaluatingParticipants.slice(1).map((userId) => ({
+      voterId: userId,
+      selectedUserId: adminUserId
+    })),
+    createdBy: adminUserId
+  });
+
+  // 7명분 Evaluation 도큐먼트 생성 (각자가 본인 외 7명에 대한 평가)
+  const evaluatingMatchId = String(evaluatingMatch._id);
+  const SAMPLE_COMMENTS_BY_TARGET: Record<string, string[]> = {
+    'seed-pc2-u1': ['공격이 매서웠음', '결정적 한 방', '리더십 좋았어요'],
+    'seed-pc2-u2': ['수비가 벽이었음', '디그 좋음', '안정감 있었어요'],
+    'seed-pc2-u3': ['올라운더 활약', '클러치 상황 좋음', '센스 좋음'],
+    'seed-pc2-u4': ['서브 위협적', '한 박자 빨랐음', '날카로웠어요'],
+    'seed-pc2-u5': ['신예답지 않은 패기', '실수 적음', '발전 가능성'],
+    'seed-pc2-u6': ['토스 정확도 굿', '템포 조절 좋음', '리시브도 안정적'],
+    'seed-pc2-u7': ['공수 균형', '꾸준한 활약', '큰 경기 강함'],
+    'seed-pc2-u8': ['루키지만 잘함', '폼 좋음', '향후 기대됨']
+  };
+
+  for (const evaluator of PLAYERS.slice(1)) {
+    const evaluatorId = userIdMap.get(evaluator.kakaoId)!;
+    const ratings = PLAYERS.filter((p) => p.kakaoId !== evaluator.kakaoId).map((target) => {
+      const targetUserId = userIdMap.get(target.kakaoId)!;
+      const comments = SAMPLE_COMMENTS_BY_TARGET[target.kakaoId] ?? [];
+      return {
+        targetUserId,
+        metricScores: METRICS.map((metricKey) => ({
+          metricKey,
+          score: clamp10((target.base as Record<string, number>)[metricKey] + (Math.random() * 0.6 - 0.3))
+        })),
+        absences: [],
+        comment: comments[Math.floor(Math.random() * Math.max(comments.length, 1))] ?? ''
+      };
+    });
+    await Evaluation.create({
+      clubRoomId,
+      matchId: evaluatingMatchId,
+      evaluatorId,
+      ratings,
+      mvpPick: adminUserId,
+      submittedAt: todayMatchDate
+    });
+  }
+
+  matchIds.push(evaluatingMatchId);
 
   const summary = {
     clubRoomId,

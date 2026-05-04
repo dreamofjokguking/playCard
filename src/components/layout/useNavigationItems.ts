@@ -15,15 +15,15 @@ function extractClubRoomIdFromPath(pathname: string | null): string | null {
 
 export function useNavigationItems(): NavigationItem[] {
   const pathname = usePathname();
-  const [primaryClubRoomId, setPrimaryClubRoomId] = useState<string | null>(null);
+  const [isServiceAdmin, setIsServiceAdmin] = useState(false);
 
   useEffect(() => {
     let active = true;
     fetch('/api/auth/me', { cache: 'no-store' })
       .then((res) => (res.ok ? res.json() : null))
-      .then((json: { success?: boolean; data?: { primaryClubRoom?: { _id: string } | null } } | null) => {
+      .then((json: { success?: boolean; data?: { role?: string } } | null) => {
         if (!active || !json?.success) return;
-        setPrimaryClubRoomId(json.data?.primaryClubRoom?._id ?? null);
+        setIsServiceAdmin(json.data?.role === 'service_admin');
       })
       .catch(() => undefined);
     return () => {
@@ -32,14 +32,10 @@ export function useNavigationItems(): NavigationItem[] {
   }, []);
 
   const urlClubRoomId = extractClubRoomIdFromPath(pathname);
-  const clubRoomId = urlClubRoomId ?? primaryClubRoomId;
 
   // 클럽 컨텍스트 = URL이 /club-rooms/[id]/* 형태일 때만
   if (urlClubRoomId) {
     return getClubContextNav(urlClubRoomId);
   }
-  // /club-rooms 목록, /club-rooms/new, /club-rooms/search 등은 클럽 외 컨텍스트
-  // 단, 내가 가진 클럽이 있다면 그걸 가지고 있어도 무방하지만 명확성 위해 outside로 통일
-  void clubRoomId;
-  return getOutsideClubNav();
+  return getOutsideClubNav({ isServiceAdmin });
 }
