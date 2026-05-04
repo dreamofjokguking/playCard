@@ -35,12 +35,22 @@ async function _GET(request: NextRequest, context: { params: { id: string } }) {
     return NextResponse.json({ success: false, message: '같은 클럽 소속만 공유 화면을 볼 수 있습니다.' }, { status: 403 });
   }
 
+  const participants = match.participants ?? [];
+  const users = await User.find({ _id: { $in: participants } })
+    .select({ _id: 1, displayName: 1, nickname: 1 })
+    .lean();
+  const nameMap = new Map(users.map((user) => [String(user._id), user.displayName || user.nickname || String(user._id)]));
+
   return NextResponse.json({
     success: true,
     data: {
       _id: String(match._id),
       clubRoomId: match.clubRoomId,
-      participants: match.participants ?? [],
+      participants,
+      participantRows: participants.map((id) => ({
+        _id: id,
+        displayName: nameMap.get(id) ?? id
+      })),
       teamAssignments: match.teamAssignments ?? []
     }
   });

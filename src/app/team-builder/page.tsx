@@ -33,7 +33,13 @@ type MatchByIdResponse = {
   _id: string;
   clubRoomId: string;
   participants: string[];
+  participantRows?: Array<{ _id: string; displayName: string }>;
   teamAssignments?: Array<{ userId: string; team: 'red' | 'blue' }>;
+};
+
+type RankingRow = {
+  userId: string;
+  score: number;
 };
 
 function TeamBuilderContent() {
@@ -46,6 +52,7 @@ function TeamBuilderContent() {
   const [mode, setMode] = useState<'auto' | 'manual'>('auto');
   const [matchId, setMatchId] = useState('');
   const [saving, setSaving] = useState(false);
+  const [balancing, setBalancing] = useState(false);
 
   const isShareView = searchParams.get('view') === 'share';
 
@@ -70,31 +77,46 @@ function TeamBuilderContent() {
     setLoading(true);
     setErrorMessage('');
     setNoticeMessage('');
+
     const endpoint = isShareView
       ? `/api/matches/${encodeURIComponent(targetMatchId)}/share`
       : `/api/admin/matches/${encodeURIComponent(targetMatchId)}`;
     const matchRes = await fetch(endpoint, { cache: 'no-store' });
     const matchJson = await parseJsonSafe<{ success: boolean; data?: MatchByIdResponse; message?: string }>(matchRes);
     if (!matchRes.ok || !matchJson?.success || !matchJson.data) {
-      setErrorMessage(matchJson?.message || '경기 정보를 불러오지 못했습니다.');
+      if (matchRes.status === 401) {
+        setErrorMessage('로그인 후 공유 링크를 다시 열어주세요.');
+      } else if (matchRes.status === 403) {
+        setErrorMessage('같은 클럽 소속만 공유 화면을 볼 수 있습니다.');
+      } else if (matchRes.status === 404) {
+        setErrorMessage('경기를 찾을 수 없습니다. 링크를 확인해주세요.');
+      } else {
+        setErrorMessage(matchJson?.message || '경기 정보를 불러오지 못했습니다.');
+      }
       setLoading(false);
       return;
     }
 
     const participantIds = matchJson.data.participants ?? [];
-    const memberRes = await fetch(
-      `/api/admin/members?clubRoomId=${encodeURIComponent(matchJson.data.clubRoomId)}&status=active`,
-      { cache: 'no-store' }
-    );
-    const memberJson = await parseJsonSafe<{ success: boolean; data?: MemberRow[]; message?: string }>(memberRes);
-    if (!memberRes.ok || !memberJson?.success || !memberJson.data) {
-      setErrorMessage(memberJson?.message || '멤버 정보를 불러오지 못했습니다.');
-      setLoading(false);
-      return;
+    let participants: Array<{ _id: string; displayName: string }>;
+
+    if (isShareView && Array.isArray(matchJson.data.participantRows)) {
+      participants = matchJson.data.participantRows;
+    } else {
+      const memberRes = await fetch(
+        `/api/admin/members?clubRoomId=${encodeURIComponent(matchJson.data.clubRoomId)}&status=active`,
+        { cache: 'no-store' }
+      );
+      const memberJson = await parseJsonSafe<{ success: boolean; data?: MemberRow[]; message?: string }>(memberRes);
+      if (!memberRes.ok || !memberJson?.success || !memberJson.data) {
+        setErrorMessage(memberJson?.message || '멤버 정보를 불러오지 못했습니다.');
+        setLoading(false);
+        return;
+      }
+      const nameMap = new Map(memberJson.data.map((m) => [m._id, m.displayName || m.nickname || m._id]));
+      participants = participantIds.map((id) => ({ _id: id, displayName: nameMap.get(id) || id }));
     }
 
-    const nameMap = new Map(memberJson.data.map((m) => [m._id, m.displayName || m.nickname || m._id]));
-    const participants = participantIds.map((id) => ({ _id: id, displayName: nameMap.get(id) || id }));
     const saved = Object.fromEntries((matchJson.data.teamAssignments ?? []).map((v) => [v.userId, v.team])) as Record<
       string,
       'red' | 'blue'
@@ -110,6 +132,7 @@ function TeamBuilderContent() {
     setLoading(true);
     setErrorMessage('');
     setNoticeMessage('');
+
     const res = await fetch('/api/evaluations/current', { cache: 'no-store' });
     const json = await parseJsonSafe<ApiResponse>(res);
     if (res.ok && json?.success && json.data?.participants?.length) {
@@ -137,6 +160,7 @@ function TeamBuilderContent() {
       setLoading(false);
       return;
     }
+
     const memberRes = await fetch(`/api/admin/members?clubRoomId=${encodeURIComponent(roomId)}&status=active`, { cache: 'no-store' });
     const memberJson = await parseJsonSafe<{ success: boolean; data?: MemberRow[] }>(memberRes);
     const participants = (memberJson?.data ?? [])
@@ -176,6 +200,51 @@ function TeamBuilderContent() {
     setSaving(false);
   }
 
+  async function autoBalanceByRanking() {
+    if (rows.length === 0) return;
+    setBalancing(true);
+    setErrorMessage('');
+    try {
+      const res = await fetch('/api/rankings?type=overall', { cache: 'no-store' });
+      const json = await parseJsonSafe<{ success: boolean; data?: RankingRow[]; message?: string }>(res);
+      if (!res.ok || !json?.success || !json.data) {
+        setErrorMessage(json?.message || '랭킹 데이터를 불러오지 못했습니다.');
+        return;
+      }
+
+      const scoreMap = new Map(json.data.map((row) => [row.userId, row.score]));
+      const sorted = [...rows]
+        .map((row) => ({ ...row, score: scoreMap.get(row._id) ?? 5 }))
+        .sort((a, b) => b.score - a.score);
+
+      // Greedy balancing: always assign next highest to the currently lower-sum team.
+      let redSum = 0;
+      let blueSum = 0;
+      const next: Record<string, 'red' | 'blue'> = {};
+      for (const player of sorted) {
+        if (redSum <= blueSum) {
+          next[player._id] = 'red';
+          redSum += player.score;
+        } else {
+          next[player._id] = 'blue';
+          blueSum += player.score;
+        }
+      }
+
+      setManualAssignments(next);
+      setNoticeMessage(`실력기반 자동편성 완료 (레드 ${redSum.toFixed(1)} / 블루 ${blueSum.toFixed(1)})`);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : '실력기반 자동편성에 실패했습니다.');
+    } finally {
+      setBalancing(false);
+    }
+  }
+
+  function resetRoundRobin() {
+    setManualAssignments(makeInitialAssignments(rows));
+    setNoticeMessage('기본 교차 배치로 초기화했습니다.');
+  }
+
   function swapAssignment(memberId: string) {
     if (isShareView) return;
     setManualAssignments((prev) => ({
@@ -204,6 +273,16 @@ function TeamBuilderContent() {
     return { red, blue };
   }, [rows, manualAssignments]);
 
+  const teamScore = useMemo(() => {
+    const red = teams.red.length;
+    const blue = teams.blue.length;
+    return {
+      redCount: red,
+      blueCount: blue,
+      diffCount: Math.abs(red - blue)
+    };
+  }, [teams]);
+
   return (
     <>
       <section className="card">
@@ -223,6 +302,16 @@ function TeamBuilderContent() {
             수동 편성
           </button>
         </div>
+        {!isShareView ? (
+          <div className="pc-row" style={{ marginTop: 10 }}>
+            <button className="pc-button" type="button" onClick={() => autoBalanceByRanking()} disabled={balancing || rows.length === 0}>
+              {balancing ? '자동편성 계산 중...' : '실력기반 자동편성'}
+            </button>
+            <button className="pc-button" type="button" onClick={() => resetRoundRobin()} disabled={rows.length === 0}>
+              기본 교차 배치
+            </button>
+          </div>
+        ) : null}
         {!isShareView ? (
           <div className="pc-row" style={{ marginTop: 10 }}>
             <button className="pc-button pc-button-primary" type="button" onClick={() => saveTeamAssignments()} disabled={!matchId || saving}>
@@ -267,6 +356,10 @@ function TeamBuilderContent() {
                 <strong>블루팀</strong>
                 <div className="pc-meta" style={{ marginTop: 6 }}>{teams.blue.join(', ') || '-'}</div>
               </div>
+            </div>
+            <div className="pc-meta" style={{ marginTop: 10 }}>
+              인원 밸런스: 레드 {teamScore.redCount}명 / 블루 {teamScore.blueCount}명
+              {teamScore.diffCount > 0 ? ` (차이 ${teamScore.diffCount}명)` : ' (균형)'}
             </div>
           </>
         ) : null}
