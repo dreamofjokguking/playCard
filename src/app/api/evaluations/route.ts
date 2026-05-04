@@ -61,7 +61,7 @@ type AggregationContext = {
   declaredMetricsByUser: Map<string, string[]>;
 };
 
-export function aggregateResults(
+function aggregateResults(
   participants: string[],
   evaluations: AggregationEvaluation[],
   context: AggregationContext = { activeMetricKeys: [], declaredMetricsByUser: new Map() }
