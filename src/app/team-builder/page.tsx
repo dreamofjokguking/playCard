@@ -78,7 +78,15 @@ function TeamBuilderContent() {
     const matchRes = await fetch(endpoint, { cache: 'no-store' });
     const matchJson = await parseJsonSafe<{ success: boolean; data?: MatchByIdResponse; message?: string }>(matchRes);
     if (!matchRes.ok || !matchJson?.success || !matchJson.data) {
-      setErrorMessage(matchJson?.message || '경기 정보를 불러오지 못했습니다.');
+      if (matchRes.status === 401) {
+        setErrorMessage('로그인 후 공유 링크를 다시 열어주세요.');
+      } else if (matchRes.status === 403) {
+        setErrorMessage('같은 클럽 소속만 공유 화면을 볼 수 있습니다.');
+      } else if (matchRes.status === 404) {
+        setErrorMessage('경기를 찾을 수 없습니다. 링크를 확인해주세요.');
+      } else {
+        setErrorMessage(matchJson?.message || '경기 정보를 불러오지 못했습니다.');
+      }
       setLoading(false);
       return;
     }
