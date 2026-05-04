@@ -115,8 +115,8 @@ export default function LoginPage() {
             <button className="pc-button" type="button" onClick={() => signOutSession()}>
               로그아웃
             </button>
-            <button className="pc-button" type="button" onClick={() => router.push('/evaluation')}>
-              평가 페이지
+            <button className="pc-button" type="button" onClick={() => router.push('/')}>
+              홈으로
             </button>
           </div>
           <div className="quick-link">
@@ -129,17 +129,17 @@ export default function LoginPage() {
       <section className="card">
         <h2>바로 이동</h2>
         <div className="pc-admin-actions">
-          <Link href="/evaluation" className="pc-pill is-active">
-            평가
+          <Link href="/" className="pc-pill is-active">
+            내 클럽
           </Link>
-          <Link href="/admin/members" className="pc-pill">
-            멤버 관리
+          <Link href="/club-rooms/search" className="pc-pill">
+            클럽 검색
           </Link>
-          <Link href="/admin/matches" className="pc-pill">
-            경기 관리
+          <Link href="/club-rooms/new" className="pc-pill">
+            클럽 생성
           </Link>
           <Link href="/club-rooms" className="pc-pill">
-            클럽룸 테스트
+            클럽룸 테스트(레거시)
           </Link>
         </div>
       </section>

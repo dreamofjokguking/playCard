@@ -1,7 +1,7 @@
 'use client';
 
 import { FormEvent, useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 
 type MeResponse = {
   role: string;
@@ -34,6 +34,8 @@ const MIN_PARTICIPANTS = 4;
 
 export default function NewMatchPage() {
   const router = useRouter();
+  const params = useParams<{ id: string }>();
+  const clubBase = `/club-rooms/${params.id}`;
   const [clubRoomId, setClubRoomId] = useState('');
   const [date, setDate] = useState('');
   const [time, setTime] = useState('19:00');
@@ -164,7 +166,7 @@ export default function NewMatchPage() {
         displayName: member.displayName || member.nickname || member._id
       }));
     localStorage.setItem('teamBuilderDraft', JSON.stringify(picked));
-    router.push('/team-builder?source=admin-draft');
+    router.push(`${clubBase}/team-builder?source=admin-draft`);
   }
 
   function applyPresetAndPreview(preset: ParticipantPreset) {

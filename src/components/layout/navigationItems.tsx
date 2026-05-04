@@ -68,13 +68,29 @@ function BellIcon({ size }: IconProps) {
   );
 }
 
-function ChartIcon({ size }: IconProps) {
+function FolderIcon({ size }: IconProps) {
   return (
     <StrokeIcon size={size}>
-      <path d="M3 20h18" />
-      <path d="M7 16v-4" />
-      <path d="M12 16V8" />
-      <path d="M17 16v-7" />
+      <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+    </StrokeIcon>
+  );
+}
+
+function SearchIcon({ size }: IconProps) {
+  return (
+    <StrokeIcon size={size}>
+      <circle cx="11" cy="11" r="7" />
+      <path d="M20 20l-3.5-3.5" />
+    </StrokeIcon>
+  );
+}
+
+function PlusCircleIcon({ size }: IconProps) {
+  return (
+    <StrokeIcon size={size}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 8v8" />
+      <path d="M8 12h8" />
     </StrokeIcon>
   );
 }
@@ -86,12 +102,22 @@ export type NavigationItem = {
   mobileVisible: boolean;
 };
 
-export const navigationItems: NavigationItem[] = [
-  { href: '/', label: '홈', icon: HomeIcon, mobileVisible: true },
-  { href: '/dashboard', label: '대시보드', icon: ChartIcon, mobileVisible: false },
-  { href: '/evaluation', label: '평가', icon: StarIcon, mobileVisible: true },
-  { href: '/notifications', label: '알림', icon: BellIcon, mobileVisible: false },
-  { href: '/ranking', label: '순위', icon: TrophyIcon, mobileVisible: true },
-  { href: '/team-builder', label: '팀 구성', icon: UsersIcon, mobileVisible: true },
-  { href: '/admin', label: '관리', icon: SettingsIcon, mobileVisible: true }
-];
+export function getOutsideClubNav(): NavigationItem[] {
+  return [
+    { href: '/', label: '내 클럽', icon: FolderIcon, mobileVisible: true },
+    { href: '/club-rooms/search', label: '클럽 검색', icon: SearchIcon, mobileVisible: true },
+    { href: '/club-rooms/new', label: '클럽 생성', icon: PlusCircleIcon, mobileVisible: true }
+  ];
+}
+
+export function getClubContextNav(clubRoomId: string): NavigationItem[] {
+  const base = `/club-rooms/${clubRoomId}`;
+  return [
+    { href: base, label: '홈', icon: HomeIcon, mobileVisible: true },
+    { href: `${base}/evaluation`, label: '평가', icon: StarIcon, mobileVisible: true },
+    { href: `${base}/notifications`, label: '알림', icon: BellIcon, mobileVisible: false },
+    { href: `${base}/ranking`, label: '순위', icon: TrophyIcon, mobileVisible: true },
+    { href: `${base}/team-builder`, label: '팀 구성', icon: UsersIcon, mobileVisible: true },
+    { href: `${base}/admin`, label: '관리', icon: SettingsIcon, mobileVisible: true }
+  ];
+}

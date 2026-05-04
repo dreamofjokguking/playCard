@@ -29,14 +29,19 @@ async function _GET(request: NextRequest, context: { params: { id: string } }) {
     return NextResponse.json({ success: false, message: '본인 대시보드만 조회할 수 있습니다.' }, { status: 403 });
   }
 
-  const user = await User.findById(id)
+  const isObjectId = /^[a-fA-F0-9]{24}$/.test(id);
+  const user = await User.findOne(
+    isObjectId ? { $or: [{ _id: id }, { kakaoId: id }] } : { kakaoId: id }
+  )
     .select({ _id: 1, displayName: 1, nickname: 1, currentTitle: 1 })
     .lean();
   if (!user) {
     return NextResponse.json({ success: false, message: '사용자를 찾을 수 없습니다.' }, { status: 404 });
   }
 
-  const matches = await Match.find({ status: 'completed', participants: id })
+  const userObjectId = String(user._id);
+
+  const matches = await Match.find({ status: 'completed', participants: userObjectId })
     .select({ _id: 1, date: 1, results: 1 })
     .sort({ date: -1 })
     .lean();
@@ -46,7 +51,7 @@ async function _GET(request: NextRequest, context: { params: { id: string } }) {
   const recentMatches: Array<{ matchId: string; date: Date; overall: number; metrics: MetricSummary[] }> = [];
 
   for (const match of matches) {
-    const stats = match.results?.playerStats?.find((row) => row.userId === id);
+    const stats = match.results?.playerStats?.find((row) => row.userId === userObjectId);
     if (!stats) continue;
     timeline.push({
       matchId: String(match._id),

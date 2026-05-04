@@ -81,6 +81,39 @@ a {
   margin-top: 2px;
 }
 
+.pc-club-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  padding: 3px 10px;
+  border: 1px solid rgba(255, 176, 32, 0.55);
+  border-radius: 999px;
+  background: rgba(255, 176, 32, 0.1);
+  color: var(--pc-text);
+  font-size: 12px;
+  font-weight: 700;
+  max-width: 220px;
+}
+
+.pc-club-chip:hover {
+  background: rgba(255, 176, 32, 0.2);
+  border-color: var(--pc-primary);
+}
+
+.pc-club-chip-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pc-club-chip-action {
+  color: var(--pc-muted);
+  font-weight: 600;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
 .pc-icon-btn {
   width: 34px;
   height: 34px;

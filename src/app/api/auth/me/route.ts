@@ -33,12 +33,25 @@ async function _GET(request: NextRequest) {
     .select({ _id: 1, name: 1 })
     .lean();
 
+  let primaryClubRoom: { _id: string; name: string } | null = null;
+  const myClubRoomId = user.clubRoomId ? String(user.clubRoomId) : '';
+  if (myClubRoomId) {
+    const room = await ClubRoom.findById(myClubRoomId).select({ _id: 1, name: 1 }).lean();
+    if (room) primaryClubRoom = { _id: String(room._id), name: room.name };
+  }
+  if (!primaryClubRoom && managedClubRooms.length > 0) {
+    primaryClubRoom = { _id: String(managedClubRooms[0]._id), name: managedClubRooms[0].name };
+  }
+
   return NextResponse.json({
     success: true,
     data: {
       actorId,
       role,
       isServiceAdmin,
+      displayName: user.displayName || user.nickname || actorId,
+      clubRoomId: myClubRoomId,
+      primaryClubRoom,
       managedClubRooms: managedClubRooms.map((room) => ({
         _id: String(room._id),
         name: room.name

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
 type MatchRow = {
@@ -22,6 +23,8 @@ type MeResponse = {
 };
 
 export default function AdminMatchesPage() {
+  const params = useParams<{ id: string }>();
+  const clubBase = `/club-rooms/${params.id}`;
   const [rows, setRows] = useState<MatchRow[]>([]);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -120,7 +123,7 @@ export default function AdminMatchesPage() {
             </select>
           ) : null}
           <div className="pc-row">
-            <Link href="/admin/matches/new" className="pc-button pc-button-primary">
+            <Link href={`${clubBase}/admin/matches/new`} className="pc-button pc-button-primary">
               경기 생성
             </Link>
             <button className="pc-button" type="button" onClick={() => fetchRows()} disabled={loading}>
@@ -152,14 +155,14 @@ export default function AdminMatchesPage() {
                   {row.venue ? ` / ${row.venue}` : ''}
                 </div>
                 <div className="pc-row" style={{ marginTop: 8 }}>
-                  <Link href={`/team-builder?matchId=${encodeURIComponent(row._id)}`} className="pc-button">
+                  <Link href={`${clubBase}/team-builder?matchId=${encodeURIComponent(row._id)}`} className="pc-button">
                     팀구성
                   </Link>
                   <button className="pc-button" type="button" onClick={() => copyShareLink(row._id)}>
                     {copiedMatchId === row._id ? '복사됨' : '공유'}
                   </button>
                   {row.status === 'completed' ? (
-                    <Link href={`/evaluation/${encodeURIComponent(row._id)}/result`} className="pc-button">
+                    <Link href={`${clubBase}/evaluation/${encodeURIComponent(row._id)}/result`} className="pc-button">
                       결과
                     </Link>
                   ) : null}

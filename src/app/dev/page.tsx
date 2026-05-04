@@ -94,10 +94,15 @@ export default function DevToolsPage() {
         <h2>현재 세션</h2>
         <p className="pc-meta">userId: {sessionUserId || '(로그인 안 됨)'}</p>
         <div className="pc-row" style={{ marginTop: 8 }}>
-          <Link href="/dashboard" className="pc-pill is-active">/dashboard</Link>
+          <Link href="/" className="pc-pill is-active">/ (홈 · 클럽 선택)</Link>
+          {summary?.clubRoomId ? (
+            <Link href={`/club-rooms/${summary.clubRoomId}`} className="pc-pill">
+              /club-rooms/[id] (클럽 메인)
+            </Link>
+          ) : null}
           <Link href="/ranking" className="pc-pill">/ranking</Link>
-          <Link href="/dashboard/preview" className="pc-pill">/dashboard/preview</Link>
           <Link href="/ranking/preview" className="pc-pill">/ranking/preview</Link>
+          <Link href="/evaluation/preview" className="pc-pill">/evaluation/preview</Link>
         </div>
         <div style={{ marginTop: 10 }}>
           <button type="button" className="pc-button" onClick={() => signOut()}>
