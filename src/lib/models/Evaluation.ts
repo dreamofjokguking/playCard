@@ -31,7 +31,22 @@ const EvaluationSchema = new Schema(
       default: []
     },
     mvpPick: { type: String, required: true, trim: true },
-    submittedAt: { type: Date, required: true, default: Date.now }
+    submittedAt: { type: Date, required: true, default: Date.now },
+    editLog: {
+      type: [
+        new Schema(
+          {
+            editorId: { type: String, required: true, trim: true },
+            editedAt: { type: Date, required: true, default: Date.now },
+            reason: { type: String, required: true, trim: true },
+            prevRatings: { type: Schema.Types.Mixed, default: [] },
+            prevMvpPick: { type: String, default: '' }
+          },
+          { _id: false }
+        )
+      ],
+      default: []
+    }
   },
   {
     timestamps: true,

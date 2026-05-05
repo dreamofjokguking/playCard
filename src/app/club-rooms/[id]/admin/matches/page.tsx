@@ -166,6 +166,9 @@ export default function AdminMatchesPage() {
                       결과
                     </Link>
                   ) : null}
+                  <Link href={`${clubBase}/admin/matches/${encodeURIComponent(row._id)}`} className="pc-button">
+                    평가 수정
+                  </Link>
                   <button className="pc-button" type="button" onClick={() => changeStatus(row._id, 'evaluating')}>
                     진행중
                   </button>
