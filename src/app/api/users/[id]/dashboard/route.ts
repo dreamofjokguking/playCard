@@ -33,7 +33,7 @@ async function _GET(request: NextRequest, context: { params: { id: string } }) {
   const user = await User.findOne(
     isObjectId ? { $or: [{ _id: id }, { kakaoId: id }] } : { kakaoId: id }
   )
-    .select({ _id: 1, displayName: 1, nickname: 1, currentTitle: 1 })
+    .select({ _id: 1, displayName: 1, nickname: 1, currentTitle: 1, currentRarity: 1 })
     .lean();
   if (!user) {
     return NextResponse.json({ success: false, message: '사용자를 찾을 수 없습니다.' }, { status: 404 });
@@ -96,7 +96,8 @@ async function _GET(request: NextRequest, context: { params: { id: string } }) {
       user: {
         _id: String(user._id),
         displayName: user.displayName || user.nickname || String(user._id),
-        currentTitle: user.currentTitle || ''
+        currentTitle: user.currentTitle || '',
+        currentRarity: user.currentRarity || 'common'
       },
       timeline: timeline
         .sort((a, b) => a.date.getTime() - b.date.getTime())

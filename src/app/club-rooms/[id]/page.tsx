@@ -4,10 +4,11 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import RadarChart from '@/components/ui/RadarChart';
 import LineChart from '@/components/ui/LineChart';
+import PlayerCard, { type Rarity } from '@/components/ui/PlayerCard';
 import type { RadarPoint } from '@/components/ui/chartUtils';
 
 type DashboardResponse = {
-  user: { _id: string; displayName: string; currentTitle: string };
+  user: { _id: string; displayName: string; currentTitle: string; currentRarity?: Rarity };
   timeline: Array<{ matchId: string; date: string; overall: number }>;
   metricAverages: Array<{ metricKey: string; avg: number }>;
   bestMetric: { metricKey: string; avg: number } | null;
@@ -176,39 +177,28 @@ export default function ClubRoomMainPage({ params }: { params: { id: string } })
 
       {!loading && actorId && dashboard ? (
         <>
-          <section className="pc-player-card">
-            <div className="pc-player-head">
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span className="pc-avatar">{dashboard.user.displayName.slice(0, 1)}</span>
-                <div>
-                  <div style={{ fontWeight: 800 }}>{dashboard.user.displayName}</div>
-                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                    <span className="pc-meta">{dashboard.user.currentTitle || '칭호 없음'}</span>
-                    <Link href={`/club-rooms/${clubRoomId}/titles`} className="pc-meta" style={{ textDecoration: 'underline' }}>
-                      도감
-                    </Link>
-                    <Link href={`/club-rooms/${clubRoomId}/history`} className="pc-meta" style={{ textDecoration: 'underline' }}>
-                      히스토리
-                    </Link>
-                  </div>
-                </div>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: 24, fontWeight: 900, color: 'var(--pc-primary)' }}>
-                  {latest?.overall ?? '-'}
-                </div>
-                <div className="pc-meta">최근 점수</div>
+          <PlayerCard
+            displayName={dashboard.user.displayName}
+            rarity={dashboard.user.currentRarity ?? 'common'}
+            title={dashboard.user.currentTitle || undefined}
+            level={Math.max(1, dashboard.recentMatches.length)}
+            overall={latest?.overall}
+            variant="compact"
+          />
+          <section className="card">
+            <div className="pc-row" style={{ alignItems: 'center', justifyContent: 'space-between' }}>
+              <span className="pc-meta">EXP · 다음 레벨까지 {expPercent}%</span>
+              <div className="pc-row" style={{ gap: 12 }}>
+                <Link href={`/club-rooms/${clubRoomId}/titles`} className="pc-meta" style={{ textDecoration: 'underline' }}>
+                  도감
+                </Link>
+                <Link href={`/club-rooms/${clubRoomId}/history`} className="pc-meta" style={{ textDecoration: 'underline' }}>
+                  히스토리
+                </Link>
               </div>
             </div>
-
-            <div className="pc-exp">
-              <div className="pc-progress-head">
-                <span>다음 레벨까지</span>
-                <span>{expPercent}%</span>
-              </div>
-              <div className="pc-progress-track">
-                <div className="pc-progress-fill" style={{ width: `${expPercent}%` }} />
-              </div>
+            <div className="pc-progress-track" style={{ marginTop: 6 }}>
+              <div className="pc-progress-fill" style={{ width: `${expPercent}%` }} />
             </div>
           </section>
 
