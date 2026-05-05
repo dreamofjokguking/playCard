@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
+import PlayerCard from '@/components/ui/PlayerCard';
 
 type Rarity = 'common' | 'rare' | 'epic' | 'legendary';
 
@@ -107,29 +108,20 @@ export default function TitlesPage() {
 
       {!loading && data ? (
         <>
-          <section className="card">
-            <h2>현재 칭호</h2>
-            {data.user.currentTitle ? (
-              <div
-                className="quick-link"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: 8,
-                  borderColor: RARITY_COLOR[data.user.currentRarity],
-                  background: 'rgba(255,255,255,0.04)'
-                }}
-              >
-                <strong style={{ color: RARITY_COLOR[data.user.currentRarity], fontSize: 16 }}>
-                  ⚡ {data.user.currentTitle}
-                </strong>
-                <span className="pc-meta">{RARITY_LABEL[data.user.currentRarity]}</span>
-              </div>
-            ) : (
+          {data.user.currentTitle ? (
+            <PlayerCard
+              displayName={data.user.displayName}
+              rarity={data.user.currentRarity}
+              title={data.user.currentTitle}
+              level={Math.max(1, data.titleHistory.length)}
+              variant="compact"
+            />
+          ) : (
+            <section className="card">
+              <h2>현재 칭호</h2>
               <p className="pc-meta">아직 부여된 칭호가 없습니다. 평가가 완료되면 자동으로 칭호가 부여됩니다.</p>
-            )}
-          </section>
+            </section>
+          )}
 
           <section className="card">
             <h2>등급별 보유</h2>
