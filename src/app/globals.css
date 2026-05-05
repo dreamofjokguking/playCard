@@ -451,33 +451,48 @@ a {
   width: 100%;
   max-width: 420px;
   margin: 0 auto;
-  padding: 14px 14px calc(96px + env(safe-area-inset-bottom));
+  /* 카드형 BottomNav가 화면 하단에서 24px 위에 떠있으므로 본체에 충분한 padding 확보 */
+  padding: 14px 14px calc(112px + env(safe-area-inset-bottom));
   display: grid;
   gap: 12px;
 }
 
 .pc-bottom-nav {
   position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 35;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(env(safe-area-inset-bottom) + 12px);
+  width: calc(100% - 32px);
+  max-width: 380px;
+  z-index: var(--pc-z-nav);
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  border-top: 1px solid var(--pc-line);
+  padding: 8px 6px;
+  border: 1px solid var(--pc-border);
+  border-radius: var(--pc-r-xl);
   background: rgba(28, 32, 48, 0.96);
   backdrop-filter: blur(8px);
+  box-shadow: var(--pc-shadow-lg);
 }
 
 .pc-bottom-link {
-  min-height: 60px;
+  min-height: 54px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  color: #8a7e66;
-  font-size: 11px;
+  gap: 3px;
+  padding: 6px 4px;
+  border-radius: var(--pc-r-md);
+  color: var(--pc-ink-tertiary);
+  font-size: var(--pc-fs-xs);
+  font-weight: var(--pc-fw-semibold);
+  transition: background var(--pc-d-base) var(--pc-ease-standard),
+    color var(--pc-d-base) var(--pc-ease-standard);
+}
+
+.pc-bottom-link:hover {
+  color: var(--pc-ink-secondary);
 }
 
 .pc-nav-icon {
@@ -490,15 +505,8 @@ a {
 
 .pc-bottom-link.is-active {
   color: var(--pc-primary);
-  font-weight: 700;
-}
-
-.pc-bottom-link.is-active .pc-nav-icon {
+  font-weight: var(--pc-fw-bold);
   background: var(--pc-primary-tint);
-  border-radius: var(--pc-r-md);
-  padding: 4px;
-  width: 28px;
-  height: 28px;
 }
 
 .card {
