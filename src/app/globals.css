@@ -665,6 +665,54 @@ a {
   cursor: not-allowed;
 }
 
+.pc-oauth-stack {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.pc-kakao-btn,
+.pc-google-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 15px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 140ms ease, transform 140ms ease, border-color 140ms ease;
+}
+
+.pc-kakao-btn {
+  border: none;
+  background: #fee500;
+  color: #181600;
+}
+
+.pc-kakao-btn:hover {
+  background: #ffd900;
+}
+
+.pc-google-btn {
+  border: 1px solid #dadce0;
+  background: #ffffff;
+  color: #1f1f1f;
+}
+
+.pc-google-btn:hover {
+  background: #f7f8f8;
+  border-color: #b8bcc0;
+}
+
+.pc-kakao-btn:active,
+.pc-google-btn:active {
+  transform: scale(0.99);
+}
+
 .pc-pill-row {
   margin-top: 10px;
   display: flex;

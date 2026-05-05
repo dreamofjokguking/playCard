@@ -3,7 +3,9 @@ import mongoose, { Schema, type InferSchemaType, type Model } from 'mongoose';
 const UserSchema = new Schema(
   {
     clubRoomId: { type: String, trim: true, default: '' },
-    kakaoId: { type: String, required: true, trim: true, unique: true },
+    kakaoId: { type: String, trim: true, index: { unique: true, sparse: true } },
+    googleId: { type: String, trim: true, index: { unique: true, sparse: true } },
+    email: { type: String, trim: true, default: '', lowercase: true },
     nickname: { type: String, required: true, trim: true },
     displayName: { type: String, required: true, trim: true },
     role: {

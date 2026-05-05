@@ -11,6 +11,10 @@
 | Health (Cloudinary) | `/api/health/cloudinary` | `health/cloudinary/route.ts` |
 | Auth Session | `/api/auth/session` | `auth/session/route.ts` (GET, POST, DELETE) |
 | Auth Me | `/api/auth/me` | `auth/me/route.ts` (GET) |
+| Auth Kakao Start | `/api/auth/kakao/start` | `auth/kakao/start/route.ts` (GET) — Kakao authorize URL로 302 + state 쿠키 |
+| Auth Kakao Callback | `/api/auth/kakao/callback` | `auth/kakao/callback/route.ts` (GET) — code→token→userinfo→User upsert(by kakaoId)→세션 쿠키 |
+| Auth Google Start | `/api/auth/google/start` | `auth/google/start/route.ts` (GET) — Google authorize URL로 302 + state 쿠키 |
+| Auth Google Callback | `/api/auth/google/callback` | `auth/google/callback/route.ts` (GET) — code→token→userinfo→User upsert(by googleId)→세션 쿠키 |
 | Club Rooms | `/api/club-rooms` | `club-rooms/route.ts` |
 | Club Room Detail | `/api/club-rooms/[id]` | `club-rooms/[id]/route.ts` (GET, PATCH, DELETE) |
 | Admin Matches | `/api/admin/matches` | `admin/matches/route.ts` (GET, POST) |
