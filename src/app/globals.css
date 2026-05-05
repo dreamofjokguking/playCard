@@ -300,6 +300,23 @@
   box-shadow: var(--pc-shadow-glow-gold);
 }
 
+/* ============================================================
+   결과 화면 칭호 그리드 (모바일 1컬럼, 데스크톱 2컬럼)
+   ============================================================ */
+
+.pc-titled-grid {
+  margin-top: var(--pc-space-4);
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--pc-space-4);
+}
+
+@media (min-width: 1024px) {
+  .pc-titled-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 * {
   box-sizing: border-box;
 }
