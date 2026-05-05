@@ -17,6 +17,8 @@
 | Admin Match Detail | `/api/admin/matches/[id]` | `admin/matches/[id]/route.ts` (GET, PATCH) |
 | Admin Members | `/api/admin/members` | `admin/members/route.ts` (GET) |
 | Admin Member Detail | `/api/admin/members/[id]` | `admin/members/[id]/route.ts` (PATCH) |
+| Admin Evaluations List | `/api/admin/evaluations?matchId=...` | `admin/evaluations/route.ts` (GET) — 매치별 평가 + editLog + nameMap |
+| Admin Evaluation Edit | `/api/admin/evaluations/[id]` | `admin/evaluations/[id]/route.ts` (PATCH) — 점수/MVP 수정 + reason 필수 + editLog push + Match.results 재계산 |
 | Evaluation Current | `/api/evaluations/current` | `evaluations/current/route.ts` (GET) |
 | Evaluation Position Submit | `/api/evaluations/positions` | `evaluations/positions/route.ts` (POST) |
 | Evaluation Submit | `/api/evaluations` | `evaluations/route.ts` (POST) |

@@ -8,6 +8,7 @@ import ClubRoom from '@/lib/models/ClubRoom';
 import User from '@/lib/models/User';
 import { broadcastNotification } from '@/lib/notifications';
 import { generateTitle, isGeminiEnabled, loadAiSettings, type TitleRarity } from '@/lib/gemini';
+import { aggregateResults } from '@/lib/matchAggregation';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,106 +35,6 @@ type SubmitEvaluationResponse = {
   matchCompleted: boolean;
   resultPath?: string;
 };
-
-type AggregatedPlayerStat = {
-  userId: string;
-  metricStats: { metricKey: string; avg: number; count: number }[];
-  overall: number;
-  absences: string[];
-  mvpCount: number;
-  comments: string[];
-  title?: string;
-  rarity?: TitleRarity;
-};
-
-function roundScore(value: number): number {
-  return Math.round(value * 10) / 10;
-}
-
-type AggregationEvaluation = {
-  mvpPick: string;
-  ratings: Array<{
-    targetUserId: string;
-    metricScores: Array<{ metricKey: string; score?: number | null }>;
-    absences?: string[];
-    comment?: string;
-  }>;
-};
-
-type AggregationContext = {
-  activeMetricKeys: string[];
-  declaredMetricsByUser: Map<string, string[]>;
-};
-
-function aggregateResults(
-  participants: string[],
-  evaluations: AggregationEvaluation[],
-  context: AggregationContext = { activeMetricKeys: [], declaredMetricsByUser: new Map() }
-) {
-  const mvpCountMap = new Map<string, number>();
-  for (const evaluation of evaluations) {
-    const current = mvpCountMap.get(evaluation.mvpPick) ?? 0;
-    mvpCountMap.set(evaluation.mvpPick, current + 1);
-  }
-
-  const byPlayer: AggregatedPlayerStat[] = participants.map((userId) => {
-    const metricTotals = new Map<string, { total: number; count: number }>();
-    const absenceSet = new Set<string>();
-    const comments: string[] = [];
-
-    for (const evaluation of evaluations) {
-      const rating = evaluation.ratings.find((value) => value.targetUserId === userId);
-      if (!rating) continue;
-
-      for (const absence of rating.absences ?? []) {
-        absenceSet.add(absence);
-      }
-
-      if (rating.comment) {
-        comments.push(rating.comment);
-      }
-
-      for (const metricScore of rating.metricScores) {
-        if (typeof metricScore.score !== 'number') continue;
-        const current = metricTotals.get(metricScore.metricKey) ?? { total: 0, count: 0 };
-        metricTotals.set(metricScore.metricKey, {
-          total: current.total + metricScore.score,
-          count: current.count + 1
-        });
-      }
-    }
-
-    // 자동 결장 산출: 클럽룸의 활성 메트릭 중, 본인이 선언하지 않은 메트릭은 결장 처리
-    const declared = context.declaredMetricsByUser.get(userId);
-    if (declared && context.activeMetricKeys.length > 0) {
-      const declaredSet = new Set(declared);
-      for (const metricKey of context.activeMetricKeys) {
-        if (!declaredSet.has(metricKey)) absenceSet.add(metricKey);
-      }
-    }
-
-    const metricStats = Array.from(metricTotals.entries()).map(([metricKey, value]) => ({
-      metricKey,
-      avg: roundScore(value.total / value.count),
-      count: value.count
-    }));
-
-    const totalScore = metricStats.reduce((sum, metric) => sum + metric.avg * metric.count, 0);
-    const totalCount = metricStats.reduce((sum, metric) => sum + metric.count, 0);
-    const overall = totalCount > 0 ? roundScore(totalScore / totalCount) : 0;
-
-    return {
-      userId,
-      metricStats,
-      overall,
-      absences: Array.from(absenceSet),
-      mvpCount: mvpCountMap.get(userId) ?? 0,
-      comments
-    };
-  });
-
-  return { playerStats: byPlayer };
-}
 
 async function _POST(request: NextRequest) {
   await dbConnect();
