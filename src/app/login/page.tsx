@@ -37,11 +37,9 @@ export default function LoginPage() {
 function LoginPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [userId, setUserId] = useState('kimis0719');
   const [sessionUserId, setSessionUserId] = useState<string | null>(null);
   const [me, setMe] = useState<MeResponse | null>(null);
   const [message, setMessage] = useState('');
-  const [showDev, setShowDev] = useState(false);
 
   async function readJsonSafe<T>(res: Response): Promise<ApiResponse<T> | null> {
     const text = await res.text();
@@ -71,27 +69,6 @@ function LoginPageInner() {
       return;
     }
     setMe(json.data);
-  }
-
-  async function signInSession() {
-    setMessage('');
-    const res = await fetch('/api/auth/session', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId })
-    });
-    const json = await readJsonSafe<{ userId: string }>(res);
-    if (!json) {
-      setMessage('세션 로그인 응답을 읽지 못했습니다.');
-      return;
-    }
-    if (!res.ok || !json.success) {
-      setMessage(json.message || '세션 로그인에 실패했습니다.');
-      return;
-    }
-    setMessage(`세션 로그인 완료: ${json.data?.userId}`);
-    await refreshSession();
-    await refreshMe();
   }
 
   async function signOutSession() {
@@ -174,42 +151,6 @@ function LoginPageInner() {
             클럽 생성
           </Link>
         </div>
-      </section>
-
-      <section className="card">
-        <button
-          type="button"
-          className="pc-button"
-          onClick={() => setShowDev((v) => !v)}
-          aria-expanded={showDev}
-        >
-          {showDev ? '개발/관리 도구 닫기' : '개발/관리 도구 열기'}
-        </button>
-        {showDev ? (
-          <div className="pc-form-grid" style={{ marginTop: 12 }}>
-            <p className="pc-meta" style={{ marginTop: 0 }}>
-              테스트 계정 즉시 진입용. userId(ObjectId 또는 kakaoId)를 입력해 세션 쿠키를 설정합니다.
-            </p>
-            <input
-              className="pc-field"
-              value={userId}
-              onChange={(event) => setUserId(event.target.value)}
-              placeholder="userId 입력"
-            />
-            <div className="pc-row">
-              <button className="pc-button pc-button-primary" type="button" onClick={() => signInSession()}>
-                세션 강제 설정
-              </button>
-              <button className="pc-button" type="button" onClick={() => signOutSession()}>
-                세션 해제
-              </button>
-            </div>
-            <div className="quick-link">
-              <div>현재 세션: {sessionUserId || '(없음)'}</div>
-              <div className="pc-meta">권한: {me ? `${me.role} / actorId: ${me.actorId}` : '미로그인'}</div>
-            </div>
-          </div>
-        ) : null}
       </section>
 
       {message ? <p style={{ color: 'var(--pc-muted)' }}>{message}</p> : null}

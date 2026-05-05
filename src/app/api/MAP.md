@@ -23,6 +23,11 @@
 | Admin Member Detail | `/api/admin/members/[id]` | `admin/members/[id]/route.ts` (PATCH) |
 | Admin Evaluations List | `/api/admin/evaluations?matchId=...` | `admin/evaluations/route.ts` (GET) — 매치별 평가 + editLog + nameMap |
 | Admin Evaluation Edit | `/api/admin/evaluations/[id]` | `admin/evaluations/[id]/route.ts` (PATCH) — 점수/MVP 수정 + reason 필수 + editLog push + Match.results 재계산 |
+| User Me | `/api/users/me` | `users/me/route.ts` (PATCH) — 닉네임 변경 + 온보딩 완료 처리 |
+| Upload Image | `/api/upload/image` | `upload/image/route.ts` (POST) — Cloudinary 업로드 (5MB, JPEG/PNG/WebP/GIF) |
+| Club Applications | `/api/club-rooms/[id]/applications` | `club-rooms/[id]/applications/route.ts` (POST/GET) — 가입 신청 / 신청자 목록 |
+| Club Application Decision | `/api/club-rooms/[id]/applications/[applicantId]` | `club-rooms/[id]/applications/[applicantId]/route.ts` (PATCH) — 승인/거절 + 알림 + role 자동 승격 |
+| Dev Sync Indexes (dev only) | `/api/dev/sync-user-indexes` | `dev/sync-user-indexes/route.ts` (GET) — User 컬렉션 인덱스 마이그레이션 (sparse → partialFilterExpression) |
 | Evaluation Current | `/api/evaluations/current` | `evaluations/current/route.ts` (GET) |
 | Evaluation Position Submit | `/api/evaluations/positions` | `evaluations/positions/route.ts` (POST) |
 | Evaluation Submit | `/api/evaluations` | `evaluations/route.ts` (POST) |

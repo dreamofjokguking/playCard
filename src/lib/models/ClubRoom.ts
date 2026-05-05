@@ -10,13 +10,26 @@ const PositionMetricSchema = new Schema(
   { _id: false }
 );
 
+const ClubApplicationSchema = new Schema(
+  {
+    userId: { type: String, required: true, trim: true },
+    message: { type: String, trim: true, default: '' },
+    requestedAt: { type: Date, required: true, default: Date.now }
+  },
+  { _id: false }
+);
+
 const ClubRoomSchema = new Schema(
   {
     name: { type: String, required: true, trim: true },
     sportType: { type: String, required: true, trim: true, default: 'etc' },
+    category: { type: String, trim: true, default: '' },
+    description: { type: String, trim: true, default: '' },
+    coverImage: { type: String, trim: true, default: '' },
     ownerId: { type: String, required: true, trim: true },
     managers: { type: [String], default: [] },
-    positionMetrics: { type: [PositionMetricSchema], default: [] }
+    positionMetrics: { type: [PositionMetricSchema], default: [] },
+    pendingApplications: { type: [ClubApplicationSchema], default: [] }
   },
   {
     timestamps: true,

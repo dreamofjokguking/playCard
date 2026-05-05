@@ -2,12 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useNavigationItems } from '@/components/layout/useNavigationItems';
 import PwaInstallButton from '@/components/layout/PwaInstallButton';
 
-type ClubBrief = { _id: string; name: string };
+type MeBrief = { actorId: string; displayName?: string; nickname?: string };
 
 function BellIcon() {
   return (
@@ -31,36 +31,32 @@ function MusicIcon() {
 export default function Header() {
   const pathname = usePathname();
   const items = useNavigationItems();
-  const active = items.find((item) => item.href === pathname);
   const notificationsHref = items.find((item) => item.label === '알림')?.href ?? '/';
-  const [currentClub, setCurrentClub] = useState<ClubBrief | null>(null);
-
-  const clubRoomId = useMemo(() => {
-    if (!pathname) return null;
-    const match = pathname.match(/^\/club-rooms\/([^/]+)/);
-    if (!match) return null;
-    const candidate = match[1];
-    if (candidate === 'new' || candidate === 'search') return null;
-    return candidate;
-  }, [pathname]);
+  const [me, setMe] = useState<MeBrief | null>(null);
 
   useEffect(() => {
-    if (!clubRoomId) {
-      setCurrentClub(null);
-      return;
-    }
     let active = true;
-    fetch(`/api/club-rooms/${clubRoomId}`, { cache: 'no-store' })
+    fetch('/api/auth/me', { cache: 'no-store' })
       .then((res) => (res.ok ? res.json() : null))
-      .then((json: { success?: boolean; data?: ClubBrief } | null) => {
-        if (!active || !json?.success || !json.data) return;
-        setCurrentClub({ _id: json.data._id, name: json.data.name });
+      .then((json: { success?: boolean; data?: MeBrief } | null) => {
+        if (!active) return;
+        if (json?.success && json.data) setMe(json.data);
+        else setMe(null);
       })
-      .catch(() => undefined);
+      .catch(() => setMe(null));
     return () => {
       active = false;
     };
-  }, [clubRoomId]);
+  }, [pathname]);
+
+  async function signOut() {
+    try {
+      await fetch('/api/auth/session', { method: 'DELETE' });
+    } finally {
+      setMe(null);
+      window.location.href = '/login';
+    }
+  }
   const [unreadCount, setUnreadCount] = useState(0);
 
   async function fetchUnreadCount() {
@@ -119,19 +115,9 @@ export default function Header() {
   return (
     <header className="pc-header">
       <div className="pc-header-inner">
-        <div>
-          <Link href="/" className="pc-logo">
-            PlayCard
-          </Link>
-          {clubRoomId ? (
-            <Link href="/" className="pc-club-chip" aria-label="다른 클럽 선택">
-              <span className="pc-club-chip-name">{currentClub?.name ?? '클럽 불러오는 중...'}</span>
-              <span className="pc-club-chip-action">↻ 변경</span>
-            </Link>
-          ) : (
-            <div className="pc-active-page">{active?.label ?? '클럽 선택'}</div>
-          )}
-        </div>
+        <Link href="/" className="pc-logo" aria-label="PlayCard 홈">
+          PlayCard
+        </Link>
         <div className="pc-header-meta">
           <PwaInstallButton />
           <button type="button" className="pc-icon-btn" aria-label="음악">
@@ -141,9 +127,15 @@ export default function Header() {
             <BellIcon />
             {unreadCount > 0 ? <span className="pc-badge-dot">{unreadCount}</span> : null}
           </Link>
-          <Link href="/login" className="pc-chip-link">
-            로그인
-          </Link>
+          {me ? (
+            <button type="button" className="pc-chip-link" onClick={() => signOut()}>
+              로그아웃
+            </button>
+          ) : (
+            <Link href="/login" className="pc-chip-link">
+              로그인
+            </Link>
+          )}
         </div>
       </div>
     </header>
