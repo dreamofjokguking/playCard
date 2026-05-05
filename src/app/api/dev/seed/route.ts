@@ -100,6 +100,7 @@ async function _POST(request: NextRequest) {
         displayName: player.displayName,
         role,
         status: 'active',
+        onboardedAt: new Date(),
         currentTitle: index === 0 ? '오늘의 에이스' : index === 1 ? '벽돌 같은 수비' : ''
       });
     })

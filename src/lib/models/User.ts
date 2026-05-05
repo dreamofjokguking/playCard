@@ -3,8 +3,16 @@ import mongoose, { Schema, type InferSchemaType, type Model } from 'mongoose';
 const UserSchema = new Schema(
   {
     clubRoomId: { type: String, trim: true, default: '' },
-    kakaoId: { type: String, trim: true, index: { unique: true, sparse: true } },
-    googleId: { type: String, trim: true, index: { unique: true, sparse: true } },
+    kakaoId: {
+      type: String,
+      trim: true,
+      index: { unique: true, partialFilterExpression: { kakaoId: { $type: 'string' } } }
+    },
+    googleId: {
+      type: String,
+      trim: true,
+      index: { unique: true, partialFilterExpression: { googleId: { $type: 'string' } } }
+    },
     email: { type: String, trim: true, default: '', lowercase: true },
     nickname: { type: String, required: true, trim: true },
     displayName: { type: String, required: true, trim: true },
@@ -45,7 +53,8 @@ const UserSchema = new Schema(
       ],
       default: []
     },
-    favoriteGroup: { type: Boolean, default: false }
+    favoriteGroup: { type: Boolean, default: false },
+    onboardedAt: { type: Date, default: null }
   },
   {
     timestamps: true,

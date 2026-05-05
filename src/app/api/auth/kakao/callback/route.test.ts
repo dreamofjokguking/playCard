@@ -87,7 +87,7 @@ describe('/api/auth/kakao/callback', () => {
 
     const res = await GET(buildRequest({ code: 'c', state: 's', cookieState: 's' }));
     expect(res.status).toBe(307);
-    expect(res.headers.get('location')).toBe('http://localhost:3000/');
+    expect(res.headers.get('location')).toBe('http://localhost:3000/onboarding');
     expect(create).toHaveBeenCalledTimes(1);
 
     const createPayload = create.mock.calls[0][0];

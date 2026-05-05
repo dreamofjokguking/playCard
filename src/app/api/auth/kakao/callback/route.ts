@@ -68,8 +68,10 @@ async function _GET(request: NextRequest) {
   await dbConnect();
   const existing = await User.findOne({ kakaoId }).lean();
   let userId: string;
+  let needsOnboarding = false;
   if (existing) {
     userId = String(existing._id);
+    needsOnboarding = !existing.onboardedAt;
     await User.findByIdAndUpdate(existing._id, {
       $set: {
         ...(profileImage ? { profileImage } : {}),
@@ -87,9 +89,10 @@ async function _GET(request: NextRequest) {
       status: 'active'
     });
     userId = String(created._id);
+    needsOnboarding = true;
   }
 
-  const target = new URL('/', config.appUrl);
+  const target = new URL(needsOnboarding ? '/onboarding' : '/', config.appUrl);
   const response = NextResponse.redirect(target);
   response.cookies.set(SESSION_COOKIE_NAME, userId, {
     httpOnly: false,

@@ -25,13 +25,19 @@ async function _GET(request: NextRequest) {
     return NextResponse.json({ success: false, message: '사용자를 찾을 수 없습니다.' }, { status: 404 });
   }
 
-  const role = user.role ?? 'member';
+  let role = user.role ?? 'member';
   const isServiceAdmin = role === 'service_admin' || role === 'admin';
   const managedClubRooms = await ClubRoom.find({
     $or: [{ ownerId: actorId }, { managers: actorId }]
   })
     .select({ _id: 1, name: 1 })
     .lean();
+
+  // 클럽 오너/매니저인데 role이 'pending'으로 남아있으면 자동 승격
+  if (role === 'pending' && managedClubRooms.length > 0) {
+    await User.findByIdAndUpdate(user._id, { role: 'admin' });
+    role = 'admin';
+  }
 
   let primaryClubRoom: { _id: string; name: string } | null = null;
   const myClubRoomId = user.clubRoomId ? String(user.clubRoomId) : '';
@@ -50,6 +56,10 @@ async function _GET(request: NextRequest) {
       role,
       isServiceAdmin,
       displayName: user.displayName || user.nickname || actorId,
+      nickname: user.nickname || '',
+      profileImage: user.profileImage || '',
+      onboardedAt: user.onboardedAt ?? null,
+      needsOnboarding: !user.onboardedAt,
       clubRoomId: myClubRoomId,
       primaryClubRoom,
       managedClubRooms: managedClubRooms.map((room) => ({

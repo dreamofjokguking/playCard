@@ -12,6 +12,18 @@ export function isSportType(value: string): value is SportType {
   return (ALLOWED_SPORT_TYPES as readonly string[]).includes(value);
 }
 
+import { isClubCategory } from '@/lib/clubCategories';
+
+export function normalizeCategory(value: string | undefined): string {
+  const trimmed = (value ?? '').trim();
+  if (!trimmed) return '';
+  return isClubCategory(trimmed) ? trimmed : '기타';
+}
+
+export function normalizeDescription(value: string | undefined): string {
+  return (value ?? '').trim().slice(0, 500);
+}
+
 export function normalizeMetricInput(metrics: MetricInput[]) {
   const normalized = metrics.map((metric, index) => ({
     key: metric.key.trim(),
