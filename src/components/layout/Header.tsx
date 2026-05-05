@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useNavigationItems } from '@/components/layout/useNavigationItems';
+import PwaInstallButton from '@/components/layout/PwaInstallButton';
 
 type ClubBrief = { _id: string; name: string };
 
@@ -132,6 +133,7 @@ export default function Header() {
           )}
         </div>
         <div className="pc-header-meta">
+          <PwaInstallButton />
           <button type="button" className="pc-icon-btn" aria-label="음악">
             <MusicIcon />
           </button>
