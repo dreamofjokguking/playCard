@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
+import PlayerCard from '@/components/ui/PlayerCard';
 
 type Rarity = 'common' | 'rare' | 'epic' | 'legendary';
 
@@ -43,19 +44,7 @@ const KOREAN_METRIC_LABELS: Record<string, string> = {
   set: '세터'
 };
 
-const RARITY_LABEL: Record<Rarity, string> = {
-  common: '일반',
-  rare: '희귀',
-  epic: '영웅',
-  legendary: '전설'
-};
-
-const RARITY_COLOR: Record<Rarity, string> = {
-  common: '#94A3B8',
-  rare: '#60A5FA',
-  epic: '#C084FC',
-  legendary: '#FFE066'
-};
+const LEGENDARY_COLOR = 'var(--pc-rarity-legendary)';
 
 function metricLabel(key: string): string {
   return KOREAN_METRIC_LABELS[key] ?? key;
@@ -186,7 +175,7 @@ export default function EvaluationResultPage() {
         <section
           className="card"
           style={{
-            border: `2px solid ${data.isUnanimousMvp ? RARITY_COLOR.legendary : 'var(--pc-accent)'}`,
+            border: `2px solid ${data.isUnanimousMvp ? LEGENDARY_COLOR : 'var(--pc-accent)'}`,
             background: data.isUnanimousMvp
               ? 'radial-gradient(120% 80% at 50% 0%, rgba(255,224,102,0.18), transparent 70%), var(--pc-surface)'
               : undefined
@@ -212,29 +201,26 @@ export default function EvaluationResultPage() {
       {titledStats.length > 0 ? (
         <section className="card">
           <h2>오늘의 칭호</h2>
-          <div className="pc-stack">
+          <div className="pc-titled-grid">
             {titledStats.map((stat) => {
               const rarity = (stat.rarity ?? 'common') as Rarity;
               const isMine = stat.userId === data.viewerId;
               return (
                 <div
                   key={stat.userId}
-                  className="quick-link"
                   style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: 8,
-                    borderColor: RARITY_COLOR[rarity]
+                    outline: isMine ? '2px solid var(--pc-secondary)' : 'none',
+                    outlineOffset: isMine ? 2 : 0,
+                    borderRadius: 'var(--pc-r-xl)'
                   }}
                 >
-                  <div>
-                    <strong>{stat.displayName}</strong>
-                    {isMine ? <span className="pc-meta" style={{ marginLeft: 6 }}>(나)</span> : null}
-                  </div>
-                  <span style={{ color: RARITY_COLOR[rarity], fontWeight: 800, fontSize: 13 }}>
-                    ⚡ {stat.title} · {RARITY_LABEL[rarity]}
-                  </span>
+                  <PlayerCard
+                    displayName={stat.displayName + (isMine ? ' (나)' : '')}
+                    rarity={rarity}
+                    title={stat.title}
+                    overall={stat.overall}
+                    variant="compact"
+                  />
                 </div>
               );
             })}
