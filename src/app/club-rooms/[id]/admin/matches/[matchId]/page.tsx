@@ -227,7 +227,7 @@ export default function AdminMatchEditPage() {
   return (
     <>
       <section className="card">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+        <div className="pc-flex-between is-top">
           <div>
             <h1 style={{ marginBottom: 4 }}>평가 수정</h1>
             <p className="pc-meta" style={{ marginTop: 0 }}>
@@ -252,7 +252,7 @@ export default function AdminMatchEditPage() {
         const ratingsForRender = isEditing ? editRatings : evaluation.ratings;
         return (
           <section key={evaluation._id} className="card">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
+            <div className="pc-flex-between">
               <strong>평가자: {evaluation.evaluatorName}</strong>
               <span className="pc-meta">제출 {formatDate(evaluation.submittedAt)}</span>
             </div>

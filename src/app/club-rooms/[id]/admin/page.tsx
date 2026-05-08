@@ -95,7 +95,7 @@ export default function AdminPage() {
 
       {pendingCount > 0 ? (
         <section className="card" style={{ borderColor: 'var(--pc-primary)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+          <div className="pc-flex-between">
             <div>
               <strong>가입 신청 {pendingCount}건이 대기 중입니다</strong>
               <p className="pc-meta" style={{ marginTop: 4 }}>

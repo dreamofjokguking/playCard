@@ -141,7 +141,7 @@ export default function AdminMatchesPage() {
             const blueCount = (row.teamAssignments ?? []).filter((v) => v.team === 'blue').length;
             return (
               <div key={row._id} className="quick-link">
-                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                <div className="pc-flex-between">
                   <strong>
                     {row.date?.slice(0, 10)} {row.time}
                   </strong>

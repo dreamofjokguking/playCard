@@ -152,7 +152,7 @@ export default function AdminPositionsPage() {
   return (
     <>
       <section className="card">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+        <div className="pc-flex-between is-top">
           <div>
             <h1 style={{ marginBottom: 4 }}>평가 포지션 관리</h1>
             <p className="pc-meta" style={{ marginTop: 0 }}>
@@ -174,7 +174,7 @@ export default function AdminPositionsPage() {
         <div className="pc-stack">
           {metrics.map((metric, index) => (
             <div key={metric.key} className="quick-link">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+              <div className="pc-flex-between">
                 <div>
                   <strong>{metric.label}</strong>{' '}
                   <span className="pc-meta">({metric.key})</span>
@@ -255,8 +255,8 @@ export default function AdminPositionsPage() {
         </div>
       </section>
 
-      <section className="card" style={{ position: 'sticky', bottom: 12 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+      <section className="card pc-save-bar">
+        <div className="pc-flex-between">
           <span className="pc-meta">
             변경한 내용은 저장 버튼을 눌러야 반영됩니다. 활성 항목 {metrics.filter((m) => m.isActive).length}개.
           </span>
