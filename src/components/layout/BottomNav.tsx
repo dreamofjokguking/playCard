@@ -9,10 +9,15 @@ export default function BottomNav() {
   const items = useNavigationItems();
   const mobileItems = items.filter((item) => item.mobileVisible);
 
+  const bestMatchHref = items
+    .map((it) => it.href)
+    .filter((href) => pathname === href || (href !== '/' && pathname?.startsWith(`${href}/`)))
+    .sort((a, b) => b.length - a.length)[0];
+
   return (
     <nav className="pc-bottom-nav">
       {mobileItems.map((item) => {
-        const active = pathname === item.href || (item.href !== '/' && pathname?.startsWith(`${item.href}/`));
+        const active = item.href === bestMatchHref;
         const Icon = item.icon;
         return (
           <Link

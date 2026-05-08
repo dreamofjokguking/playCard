@@ -8,11 +8,16 @@ export default function SideNav() {
   const pathname = usePathname();
   const items = useNavigationItems();
 
+  const bestMatchHref = items
+    .map((it) => it.href)
+    .filter((href) => pathname === href || (href !== '/' && pathname?.startsWith(`${href}/`)))
+    .sort((a, b) => b.length - a.length)[0];
+
   return (
     <aside className="pc-sidenav">
       <nav className="pc-sidenav-nav">
         {items.map((item) => {
-          const active = pathname === item.href || (item.href !== '/' && pathname?.startsWith(`${item.href}/`));
+          const active = item.href === bestMatchHref;
           const Icon = item.icon;
           return (
             <Link

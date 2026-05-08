@@ -169,7 +169,7 @@ export default function AdminMembersPage() {
           <div className="pc-stack">
             {applications.map((app) => (
               <div key={app.userId} className="quick-link">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                <div className="pc-flex-between">
                   <strong>{app.displayName}</strong>
                   <span className="pc-meta">{new Date(app.requestedAt).toLocaleDateString('ko-KR')}</span>
                 </div>
@@ -203,7 +203,7 @@ export default function AdminMembersPage() {
         <div className="pc-stack">
           {rows.map((row) => (
             <div key={row._id} className="quick-link">
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+              <div className="pc-flex-between">
                 <strong>
                   {row.displayName} ({row.nickname})
                 </strong>
