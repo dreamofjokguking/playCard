@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useNavigationItems } from '@/components/layout/useNavigationItems';
@@ -30,9 +30,11 @@ function MusicIcon() {
 
 export default function Header() {
   const pathname = usePathname();
+  const router = useRouter();
   const items = useNavigationItems();
   const notificationsHref = items.find((item) => item.label === '알림')?.href ?? '/';
   const [me, setMe] = useState<MeBrief | null>(null);
+  const [signingOut, setSigningOut] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -49,15 +51,21 @@ export default function Header() {
     };
   }, [pathname]);
 
+  const [unreadCount, setUnreadCount] = useState(0);
+
   async function signOut() {
+    if (signingOut) return;
+    setSigningOut(true);
     try {
       await fetch('/api/auth/session', { method: 'DELETE' });
-    } finally {
       setMe(null);
-      window.location.href = '/login';
+      setUnreadCount(0);
+      router.replace('/login');
+      router.refresh();
+    } finally {
+      setSigningOut(false);
     }
   }
-  const [unreadCount, setUnreadCount] = useState(0);
 
   async function fetchUnreadCount() {
     try {
@@ -128,8 +136,13 @@ export default function Header() {
             {unreadCount > 0 ? <span className="pc-badge-dot">{unreadCount}</span> : null}
           </Link>
           {me ? (
-            <button type="button" className="pc-chip-link" onClick={() => signOut()}>
-              로그아웃
+            <button
+              type="button"
+              className="pc-chip-link"
+              onClick={() => signOut()}
+              disabled={signingOut}
+            >
+              {signingOut ? '로그아웃 중...' : '로그아웃'}
             </button>
           ) : (
             <Link href="/login" className="pc-chip-link">

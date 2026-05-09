@@ -751,6 +751,16 @@ a {
   white-space: pre-line;
 }
 
+.pc-link-inline {
+  color: var(--pc-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.pc-link-inline:hover {
+  color: var(--pc-primary-hover);
+}
+
 .pc-oauth-stack {
   display: grid;
   gap: 8px;
