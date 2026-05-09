@@ -120,6 +120,19 @@ function LoginPageInner() {
             Google로 시작하기
           </a>
         </div>
+        {!sessionUserId ? (
+          <p className="pc-meta" style={{ marginTop: 12, lineHeight: 1.6 }}>
+            소셜 계정으로 가입 시{' '}
+            <Link href="/terms" className="pc-link-inline">
+              이용약관
+            </Link>
+            {' 및 '}
+            <Link href="/privacy" className="pc-link-inline">
+              개인정보처리방침
+            </Link>
+            에 동의한 것으로 간주합니다.
+          </p>
+        ) : null}
         {sessionUserId ? (
           <p className="pc-meta" style={{ marginTop: 12 }}>
             현재 세션: <strong>{sessionUserId}</strong>
