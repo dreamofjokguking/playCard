@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useRef, useState } from 'react';
 import { CLUB_CATEGORIES } from '@/lib/clubCategories';
+import { cloudinaryTransform } from '@/lib/cloudinaryTransform';
 
 export default function ClubRoomCreatePage() {
   const router = useRouter();
@@ -141,7 +142,11 @@ export default function ClubRoomCreatePage() {
               {coverImage ? (
                 <div style={{ position: 'relative', borderRadius: 12, overflow: 'hidden', marginBottom: 8 }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={coverImage} alt="클럽 커버" style={{ width: '100%', maxHeight: 220, objectFit: 'cover', display: 'block' }} />
+                  <img
+                    src={cloudinaryTransform(coverImage, { width: 800, crop: 'fill' })}
+                    alt="클럽 커버"
+                    style={{ width: '100%', maxHeight: 220, objectFit: 'cover', display: 'block' }}
+                  />
                   <button
                     type="button"
                     className="pc-pill"

@@ -23,6 +23,7 @@ const OAUTH_ERROR_MESSAGES: Record<string, string> = {
   token_failed: '토큰 교환에 실패했습니다.',
   userinfo_failed: '사용자 정보 조회에 실패했습니다.',
   userinfo_invalid: '사용자 정보가 올바르지 않습니다.',
+  email_not_verified: '이메일이 인증되지 않은 계정입니다. Google 계정에서 이메일 인증 후 다시 시도해주세요.',
   access_denied: '소셜 로그인이 취소되었습니다.'
 };
 

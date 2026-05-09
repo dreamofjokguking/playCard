@@ -62,6 +62,11 @@ async function _GET(request: NextRequest) {
     return redirectToLogin(config.appUrl, 'userinfo_invalid');
   }
 
+  // 이메일 정보를 받았는데 미검증인 경우 가입 거부
+  if (info.email && info.email_verified === false) {
+    return redirectToLogin(config.appUrl, 'email_not_verified');
+  }
+
   const googleId = String(info.sub);
   const { nickname, displayName, profileImage, email } = deriveDisplayName(info);
 

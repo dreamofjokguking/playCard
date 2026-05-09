@@ -133,4 +133,36 @@ describe('/api/auth/google/callback', () => {
     const res = await GET(buildRequest({ error: 'access_denied' }));
     expect(res.headers.get('location')).toContain('google_error=access_denied');
   });
+
+  it('rejects user with email_verified === false', async () => {
+    exchangeCodeForToken.mockResolvedValue({ access_token: 'at-1' });
+    fetchGoogleUserInfo.mockResolvedValue({
+      sub: 'sub-9',
+      email: 'unverified@example.com',
+      email_verified: false,
+      name: '미인증유저'
+    });
+
+    const res = await GET(buildRequest({ code: 'c', state: 's', cookieState: 's' }));
+    expect(res.status).toBe(307);
+    expect(res.headers.get('location')).toContain('google_error=email_not_verified');
+    expect(create).not.toHaveBeenCalled();
+    expect(findByIdAndUpdate).not.toHaveBeenCalled();
+  });
+
+  it('accepts user with email_verified === true', async () => {
+    exchangeCodeForToken.mockResolvedValue({ access_token: 'at-1' });
+    fetchGoogleUserInfo.mockResolvedValue({
+      sub: 'sub-9',
+      email: 'verified@example.com',
+      email_verified: true,
+      name: '인증유저'
+    });
+    findOne.mockReturnValue({ lean: vi.fn().mockResolvedValue(null) });
+
+    const res = await GET(buildRequest({ code: 'c', state: 's', cookieState: 's' }));
+    expect(res.status).toBe(307);
+    expect(res.headers.get('location')).toBe('http://localhost:3000/onboarding');
+    expect(create).toHaveBeenCalledTimes(1);
+  });
 });
