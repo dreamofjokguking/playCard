@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
+import { cloudinaryTransform } from '@/lib/cloudinaryTransform';
 
 type ClubBrief = {
   _id: string;
@@ -156,7 +157,11 @@ export default function ClubRoomSearchPage() {
                 {room.coverImage ? (
                   <div className="pc-club-card-cover">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={room.coverImage} alt={room.name} />
+                    <img
+                      src={cloudinaryTransform(room.coverImage, { width: 480, crop: 'fill' })}
+                      alt={room.name}
+                      loading="lazy"
+                    />
                   </div>
                 ) : (
                   <div className="pc-club-card-cover pc-club-card-cover-placeholder">

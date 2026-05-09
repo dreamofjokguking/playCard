@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { cloudinaryTransform } from '@/lib/cloudinaryTransform';
 
 type ClubDetail = {
   _id: string;
@@ -118,7 +119,10 @@ export default function ClubAboutPage() {
         {club.coverImage ? (
           <div className="pc-club-about-cover">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={club.coverImage} alt={club.name} />
+            <img
+              src={cloudinaryTransform(club.coverImage, { width: 1024, crop: 'fill' })}
+              alt={club.name}
+            />
           </div>
         ) : (
           <div className="pc-club-about-cover pc-club-card-cover-placeholder">
