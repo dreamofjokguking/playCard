@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import RadarChart from '@/components/ui/RadarChart';
 import LineChart from '@/components/ui/LineChart';
 import PlayerCard, { type Rarity } from '@/components/ui/PlayerCard';
+import ClubYoutubeSection from '@/components/ui/ClubYoutubeSection';
 import type { RadarPoint } from '@/components/ui/chartUtils';
 
 type DashboardResponse = {
@@ -264,6 +265,8 @@ export default function ClubRoomMainPage({ params }: { params: { id: string } })
           </section>
         </>
       ) : null}
+
+      <ClubYoutubeSection clubRoomId={clubRoomId} limit={4} />
 
       {!loading && podium.length > 0 ? (
         <section className="pc-podium">

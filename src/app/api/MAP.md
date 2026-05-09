@@ -27,6 +27,7 @@
 | Upload Image | `/api/upload/image` | `upload/image/route.ts` (POST) — Cloudinary 업로드 (5MB, JPEG/PNG/WebP/GIF) |
 | Club Applications | `/api/club-rooms/[id]/applications` | `club-rooms/[id]/applications/route.ts` (POST/GET) — 가입 신청 / 신청자 목록 |
 | Club Application Decision | `/api/club-rooms/[id]/applications/[applicantId]` | `club-rooms/[id]/applications/[applicantId]/route.ts` (PATCH) — 승인/거절 + 알림 + role 자동 승격 |
+| Club YouTube Latest | `/api/club-rooms/[id]/youtube-latest?limit=N` | `club-rooms/[id]/youtube-latest/route.ts` (GET) — 클럽 등록 channel_id로 RSS fetch + 파싱, 10분 캐시 |
 | Dev Sync Indexes (dev only) | `/api/dev/sync-user-indexes` | `dev/sync-user-indexes/route.ts` (GET) — User 컬렉션 인덱스 마이그레이션 (sparse → partialFilterExpression) |
 | Evaluation Current | `/api/evaluations/current` | `evaluations/current/route.ts` (GET) |
 | Evaluation Position Submit | `/api/evaluations/positions` | `evaluations/positions/route.ts` (POST) |
