@@ -26,6 +26,7 @@ const ClubRoomSchema = new Schema(
     category: { type: String, trim: true, default: '' },
     description: { type: String, trim: true, default: '' },
     coverImage: { type: String, trim: true, default: '' },
+    youtubeChannelId: { type: String, trim: true, default: '' },
     ownerId: { type: String, required: true, trim: true },
     managers: { type: [String], default: [] },
     positionMetrics: { type: [PositionMetricSchema], default: [] },

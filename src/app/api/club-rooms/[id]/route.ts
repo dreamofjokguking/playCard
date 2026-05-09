@@ -13,6 +13,10 @@ type UpdateClubRoomBody = {
   ownerId?: string;
   managers?: string[];
   positionMetrics?: MetricInput[];
+  youtubeChannelId?: string;
+  description?: string;
+  coverImage?: string;
+  category?: string;
 };
 
 function canManageClubRoom(
@@ -116,6 +120,30 @@ async function _PATCH(request: NextRequest, context: { params: { id: string } })
       );
     }
     update.positionMetrics = normalizedMetrics.data;
+  }
+
+  if (typeof body.youtubeChannelId === 'string') {
+    const value = body.youtubeChannelId.trim();
+    // 채널 ID는 보통 UC로 시작하는 24자 문자열. 빈 문자열은 연결 해제로 허용.
+    if (value && !/^[A-Za-z0-9_-]{10,40}$/.test(value)) {
+      return NextResponse.json(
+        { success: false, message: '유효한 YouTube channel_id 형식이 아닙니다.' },
+        { status: 400 }
+      );
+    }
+    update.youtubeChannelId = value;
+  }
+
+  if (typeof body.description === 'string') {
+    update.description = body.description.trim().slice(0, 500);
+  }
+
+  if (typeof body.coverImage === 'string') {
+    update.coverImage = body.coverImage.trim();
+  }
+
+  if (typeof body.category === 'string') {
+    update.category = body.category.trim().slice(0, 30);
   }
 
   if (Object.keys(update).length === 0) {

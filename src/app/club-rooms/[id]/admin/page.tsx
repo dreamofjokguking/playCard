@@ -17,6 +17,7 @@ type ClubDetail = {
   ownerId: string;
   managers?: string[];
   pendingApplications?: Array<{ userId: string }>;
+  youtubeChannelId?: string;
 };
 
 const ROLE_LABEL: Record<string, string> = {
@@ -32,6 +33,9 @@ export default function AdminPage() {
   const [me, setMe] = useState<MeResponse | null>(null);
   const [club, setClub] = useState<ClubDetail | null>(null);
   const [message, setMessage] = useState('');
+  const [youtubeId, setYoutubeId] = useState('');
+  const [savingYoutube, setSavingYoutube] = useState(false);
+  const [youtubeMessage, setYoutubeMessage] = useState('');
 
   useEffect(() => {
     let active = true;
@@ -51,6 +55,7 @@ export default function AdminPage() {
         setMe(meJson.data);
         if (clubRes.ok && clubJson.success && clubJson.data) {
           setClub(clubJson.data);
+          setYoutubeId(clubJson.data.youtubeChannelId ?? '');
         }
       } catch {
         if (active) setMessage('정보를 불러오지 못했습니다.');
@@ -75,6 +80,28 @@ export default function AdminPage() {
           : '확인 중';
 
   const pendingCount = club?.pendingApplications?.length ?? 0;
+  const canManageClub = !!(me?.isServiceAdmin || isOwner || isManager);
+
+  async function saveYoutubeChannel() {
+    setSavingYoutube(true);
+    setYoutubeMessage('');
+    try {
+      const res = await fetch(`/api/club-rooms/${params.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ youtubeChannelId: youtubeId.trim() })
+      });
+      const json = (await res.json()) as { success: boolean; message?: string; data?: ClubDetail };
+      if (!res.ok || !json.success) {
+        setYoutubeMessage(json.message || '저장 실패');
+        return;
+      }
+      setClub((prev) => (prev ? { ...prev, youtubeChannelId: youtubeId.trim() } : prev));
+      setYoutubeMessage(youtubeId.trim() ? '저장되었습니다. 클럽 메인에서 영상 섹션이 보입니다.' : '연결을 해제했습니다.');
+    } finally {
+      setSavingYoutube(false);
+    }
+  }
 
   return (
     <>
@@ -106,6 +133,50 @@ export default function AdminPage() {
               신청 확인 →
             </Link>
           </div>
+        </section>
+      ) : null}
+
+      {canManageClub ? (
+        <section className="card">
+          <h2>유튜브 채널 연결</h2>
+          <p className="pc-meta" style={{ marginTop: 0 }}>
+            클럽 채널의 channel_id를 등록하면 클럽 메인에 최신 영상이 자동으로 표시됩니다.
+          </p>
+          <p className="pc-meta" style={{ marginTop: 4 }}>
+            channel_id 찾는 법: <code>youtube.com/channel/UCxxxx</code> URL의 마지막 부분 또는{' '}
+            <code>@handle</code> 채널은 페이지 소스에서 <code>&quot;channelId&quot;:&quot;UC...&quot;</code> 검색.
+          </p>
+          <input
+            className="pc-field"
+            value={youtubeId}
+            onChange={(event) => setYoutubeId(event.target.value)}
+            placeholder="UCxxxxxxxxxxxxxxxxxxxxxx"
+            style={{ marginTop: 10 }}
+          />
+          <div className="pc-row" style={{ marginTop: 10 }}>
+            <button
+              type="button"
+              className="pc-button pc-button-primary"
+              onClick={() => saveYoutubeChannel()}
+              disabled={savingYoutube}
+            >
+              {savingYoutube ? '저장 중...' : '저장'}
+            </button>
+            {youtubeId.trim() ? (
+              <button
+                type="button"
+                className="pc-button"
+                onClick={() => {
+                  setYoutubeId('');
+                  saveYoutubeChannel();
+                }}
+                disabled={savingYoutube}
+              >
+                연결 해제
+              </button>
+            ) : null}
+          </div>
+          {youtubeMessage ? <p className="pc-meta" style={{ marginTop: 8 }}>{youtubeMessage}</p> : null}
         </section>
       ) : null}
 
