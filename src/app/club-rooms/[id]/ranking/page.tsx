@@ -26,12 +26,37 @@ type MatchOption = {
   venue?: string;
 };
 
-const tabs = [
-  { key: 'overall', label: '종합' },
-  { key: 'attack', label: '공격' },
-  { key: 'defense', label: '수비' },
-  { key: 'pass', label: '패스' }
-];
+type ClubMetric = {
+  key: string;
+  label: string;
+  isActive?: boolean;
+  order?: number;
+};
+
+type RankingTab = { key: string; label: string };
+
+const KOREAN_METRIC_FALLBACK_LABELS: Record<string, string> = {
+  attack: '공격',
+  defense: '수비',
+  toss: '토스',
+  serve: '서브',
+  pass: '패스',
+  set: '세터'
+};
+
+const OVERALL_TAB: RankingTab = { key: 'overall', label: '종합' };
+
+function buildTabsFromMetrics(metrics: ClubMetric[]): RankingTab[] {
+  const active = metrics
+    .filter((metric) => metric.isActive !== false && metric.key)
+    .slice()
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+    .map<RankingTab>((metric) => ({
+      key: metric.key,
+      label: metric.label?.trim() || KOREAN_METRIC_FALLBACK_LABELS[metric.key] || metric.key
+    }));
+  return [OVERALL_TAB, ...active];
+}
 
 const SEASON_ALL = '__season__';
 
@@ -39,6 +64,7 @@ export default function RankingPage() {
   const routeParams = useParams<{ id: string }>();
   const clubRoomId = routeParams.id;
   const [tab, setTab] = useState('overall');
+  const [tabs, setTabs] = useState<RankingTab[]>([OVERALL_TAB]);
   const [rows, setRows] = useState<RankingRow[]>([]);
   const [matches, setMatches] = useState<MatchOption[]>([]);
   const [matchId, setMatchId] = useState<string>(SEASON_ALL);
@@ -56,6 +82,24 @@ export default function RankingPage() {
         setMatches(list);
         // 가장 최근 매치를 기본 선택. 매치 없으면 시즌 누적 유지.
         if (list.length > 0) setMatchId((prev) => (prev === SEASON_ALL ? list[0]._id : prev));
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [clubRoomId]);
+
+  // 클럽의 활성 평가 항목으로 탭을 동적 구성
+  useEffect(() => {
+    let active = true;
+    fetch(`/api/club-rooms/${encodeURIComponent(clubRoomId)}`, { cache: 'no-store' })
+      .then((res) => res.json())
+      .then((json: { success: boolean; data?: { positionMetrics?: ClubMetric[] } }) => {
+        if (!active || !json.success || !json.data) return;
+        const built = buildTabsFromMetrics(json.data.positionMetrics ?? []);
+        setTabs(built);
+        // 현재 활성 탭이 새 목록에 없으면 종합으로 fallback
+        setTab((prev) => (built.some((t) => t.key === prev) ? prev : OVERALL_TAB.key));
       })
       .catch(() => undefined);
     return () => {
